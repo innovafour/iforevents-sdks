@@ -19,9 +19,13 @@ jobs:
       - uses: ruby/setup-ruby@a4effe49ee8ee5b8b5091268c473a4628afb5651 # v1.245.0
         with:
           ruby-version: ${{ matrix.ruby }}
-      - run: gem install --no-document mixpanel-ruby analytics-ruby
+      - run: gem install --no-document analytics-ruby
+      # mixpanel-ruby depends on json-logic-rb, which needs Ruby 3.0.
+      - if: ${{ matrix.ruby != '2.7' }}
+        run: gem install --no-document mixpanel-ruby
       - run: cd iforevents && ruby -Ilib -Itest test/conformance_test.rb
-      - run: cd iforevents-mixpanel && ruby -I../iforevents/lib -Ilib test/mixpanel_test.rb
+      - if: ${{ matrix.ruby != '2.7' }}
+        run: cd iforevents-mixpanel && ruby -I../iforevents/lib -Ilib test/mixpanel_test.rb
       - run: cd iforevents-segment && ruby -I../iforevents/lib -Ilib test/segment_test.rb
       - run: for g in iforevents iforevents-mixpanel iforevents-segment; do (cd $g && gem build $g.gemspec); done
       - name: Smoke
