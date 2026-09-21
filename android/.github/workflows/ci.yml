@@ -20,9 +20,12 @@ jobs:
       - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3.2.2
         with:
           packages: platform-tools
+      # No wrapper is committed; setup-gradle provides Gradle (AGP 8.7 needs 8.9+).
       - uses: gradle/actions/setup-gradle@cc4fc85e6b35bafd578d5ffbc76a5518407e1af0 # v4.2.1
+        with:
+          gradle-version: '8.11.1'
       - name: Core from the sibling repo until it is on Maven Central
         run: |
           git clone --depth 1 https://github.com/innovafour/iforevents-java ../iforevents-java
           (cd ../iforevents-java && mvn -q -ntp -pl iforevents install -DskipTests)
-      - run: ./gradlew --no-daemon test
+      - run: gradle --no-daemon test
