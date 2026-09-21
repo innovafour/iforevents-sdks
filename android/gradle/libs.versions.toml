@@ -1,0 +1,15 @@
+[versions]
+iforevents = "0.1.0"
+firebaseAnalytics = "22.1.2"
+mixpanelAndroid = "8.0.3"
+junit = "4.13.2"
+robolectric = "4.14.1"
+androidxTest = "1.6.1"
+
+[libraries]
+iforevents-core = { module = "com.iforevents:iforevents", version.ref = "iforevents" }
+firebase-analytics = { module = "com.google.firebase:firebase-analytics", version.ref = "firebaseAnalytics" }
+mixpanel-android = { module = "com.mixpanel.android:mixpanel-android", version.ref = "mixpanelAndroid" }
+junit = { module = "junit:junit", version.ref = "junit" }
+robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
+androidx-test-core = { module = "androidx.test:core", version.ref = "androidxTest" }
