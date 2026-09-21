@@ -1,0 +1,26 @@
+name: Release
+
+# Go modules are published by tags. Tag the root module (vX.Y.Z), then each
+# adapter (integrations/<name>/vX.Y.Z). This job only proves the tagged tree
+# builds and lists the tags to push for the adapters.
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-go@41dfa10bad2bb2ae585af6ee5bb4d7d973ad74ed # v5.1.0
+        with:
+          go-version: stable
+      - run: go vet ./... && go test -race -count=1 ./...
+      - name: Adapter tags to push
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          for m in integrations/*; do echo "git tag $m/$TAG && git push origin $m/$TAG"; done

@@ -1,0 +1,9 @@
+go 1.22
+
+use (
+	.
+	./integrations/amplitude
+	./integrations/mixpanel
+	./integrations/posthog
+	./integrations/segment
+)
