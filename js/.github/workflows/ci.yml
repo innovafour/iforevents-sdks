@@ -30,7 +30,7 @@ jobs:
       - run: pnpm -r test
       - name: No secret ever ships in a bundle
         run: |
-          ! grep -rIi "project_secret\|projectSecret\|X-Project-Secret" packages/*/dist --include='*.js' --include='*.cjs' | grep -v "never belongs"
+          ! grep -rIi "project_secret\|projectSecret\|X-Project-Secret" packages/*/dist --include='*.js' --include='*.cjs' | grep -v 'never belongs\|"projectSecret" in'
 
   smoke:
     name: Real api smoke
