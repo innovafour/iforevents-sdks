@@ -27,5 +27,5 @@ jobs:
       - name: Core from the sibling repo until it is on Maven Central
         run: |
           git clone --depth 1 https://github.com/innovafour/iforevents-java ../iforevents-java
-          (cd ../iforevents-java && mvn -q -ntp -pl iforevents install -DskipTests)
+          (cd ../iforevents-java && mvn -q -ntp -pl iforevents -am install -DskipTests)
       - run: gradle --no-daemon test
