@@ -1,0 +1,30 @@
+name: Publish to RubyGems
+
+# Needs RUBYGEMS_API_KEY in the repository secrets (an API key with push scope).
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: ruby/setup-ruby@a4effe49ee8ee5b8b5091268c473a4628afb5651 # v1.245.0
+        with:
+          ruby-version: '3.3'
+      - run: cd iforevents && ruby -Ilib -Itest test/conformance_test.rb
+      - name: Version matches the tag
+        run: |
+          TAG="${GITHUB_REF#refs/tags/v}"
+          V=$(ruby -Iiforevents/lib -e 'require "iforevents/version"; print Iforevents::VERSION')
+          [ "$V" = "$TAG" ] || { echo "gem is $V, tag is $TAG"; exit 1; }
+      - run: |
+          mkdir -p ~/.gem && printf -- "---\n:rubygems_api_key: %s\n" "$RUBYGEMS_API_KEY" > ~/.gem/credentials && chmod 0600 ~/.gem/credentials
+          for g in iforevents iforevents-mixpanel iforevents-segment; do (cd $g && gem build $g.gemspec && gem push $g-*.gem); done
+        env:
+          RUBYGEMS_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
