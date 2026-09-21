@@ -131,12 +131,14 @@ class IforeventsAndroid private constructor(
             }
         }
 
-        // Static shortcuts for Java callers and quick use.
-        @JvmStatic @JvmOverloads fun identify(customId: String, traits: Map<String, Any?> = emptyMap()) = instance.identify(customId, traits)
-        @JvmStatic @JvmOverloads fun track(name: String, properties: Map<String, Any?> = emptyMap()) = instance.track(name, properties)
-        @JvmStatic @JvmOverloads fun screen(name: String, properties: Map<String, Any?> = emptyMap()) = instance.screen(name, properties)
-        @JvmStatic fun reset() = instance.reset()
-        @JvmStatic fun flush() = instance.flush()
+        // Shortcuts so Kotlin can write IforeventsAndroid.track(...) after init.
+        // Not @JvmStatic: a static with the same signature as the instance
+        // method is a JVM declaration clash. Java calls getInstance().track(...).
+        @JvmOverloads fun identify(customId: String, traits: Map<String, Any?> = emptyMap()) = instance.identify(customId, traits)
+        @JvmOverloads fun track(name: String, properties: Map<String, Any?> = emptyMap()) = instance.track(name, properties)
+        @JvmOverloads fun screen(name: String, properties: Map<String, Any?> = emptyMap()) = instance.screen(name, properties)
+        fun reset() = instance.reset()
+        fun flush() = instance.flush()
 
         /** Test hook: forget the shared instance. */
         @JvmStatic
