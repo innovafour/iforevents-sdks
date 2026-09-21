@@ -1,0 +1,46 @@
+{
+  "name": "innovafour/iforevents",
+  "description": "IForevents analytics SDK for PHP: one facade, pluggable integrations, batching, retries and the public project key as the only credential",
+  "type": "library",
+  "license": "MIT",
+  "keywords": [
+    "iforevents",
+    "analytics",
+    "events",
+    "tracking"
+  ],
+  "homepage": "https://iforevents.com/docs/sdks/php",
+  "authors": [
+    {
+      "name": "Innovafour"
+    }
+  ],
+  "require": {
+    "php": ">=8.1",
+    "ext-json": "*",
+    "ext-curl": "*"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^10.5"
+  },
+  "autoload": {
+    "psr-4": {
+      "IForevents\\": "src/"
+    },
+    "files": [
+      "src/functions.php"
+    ]
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "IForevents\\Tests\\": "tests/"
+    }
+  },
+  "scripts": {
+    "test": "phpunit --colors=always",
+    "smoke": "php bin/smoke.php"
+  },
+  "config": {
+    "sort-packages": true
+  }
+}
