@@ -76,13 +76,13 @@ class IforeventsAndroidTest {
             }
         }
 
-        fun stop() { socket.close() }
+        fun shutdown() { socket.close() }
     }
 
     @After
     fun tearDown() {
         IforeventsAndroid.resetForTests()
-        server.stop()
+        server.shutdown()
     }
 
     @Test
