@@ -1,0 +1,25 @@
+{
+  "name": "@iforevents/browser",
+  "version": "0.1.0",
+  "description": "IForevents analytics SDK for browsers: auto page views, offline queue in localStorage, beacon flush on unload, pluggable integrations",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/innovafour/iforevents-js.git", "directory": "packages/browser" },
+  "homepage": "https://iforevents.com/docs/sdks/javascript",
+  "keywords": ["iforevents", "analytics", "browser", "web", "events", "page-view"],
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "unpkg": "./dist/iforevents.iife.js",
+  "jsdelivr": "./dist/iforevents.iife.js",
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js", "require": "./dist/index.cjs" } },
+  "files": ["dist", "README.md", "LICENSE"],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": { "@iforevents/core": "workspace:^" },
+  "devDependencies": { "jsdom": "^26.0.0" }
+}

@@ -1,0 +1,28 @@
+{
+  "name": "@iforevents/mixpanel",
+  "version": "0.1.0",
+  "description": "Mixpanel adapter for the IForevents SDK (browser and Node.js)",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/innovafour/iforevents-js.git", "directory": "packages/mixpanel" },
+  "homepage": "https://iforevents.com/docs/sdks/javascript#adapters",
+  "keywords": ["iforevents", "analytics", "mixpanel", "integration"],
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js", "require": "./dist/index.cjs" },
+    "./browser": { "types": "./dist/browser.d.ts", "import": "./dist/browser.js", "require": "./dist/browser.cjs" },
+    "./node": { "types": "./dist/node.d.ts", "import": "./dist/node.js", "require": "./dist/node.cjs" }
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "scripts": {
+    "build": "tsup src/index.ts src/browser.ts src/node.ts --format esm,cjs --dts --clean --target es2020 --external @iforevents/core --external mixpanel-browser --external mixpanel",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": { "@iforevents/core": "workspace:^" },
+  "peerDependencies": { "mixpanel-browser": ">=2.45.0", "mixpanel": ">=0.17.0" },
+  "peerDependenciesMeta": { "mixpanel-browser": { "optional": true }, "mixpanel": { "optional": true } }
+}
