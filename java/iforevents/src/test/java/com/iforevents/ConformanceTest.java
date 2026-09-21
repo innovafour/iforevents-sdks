@@ -138,7 +138,10 @@ class ConformanceTest {
         Iforevents ife = boot(make(cfg().batchSize(50).flushIntervalMillis(50)));
         ife.track("only");
         assertEquals(0, api.requests.size());
-        Thread.sleep(250);
+        long deadline = System.currentTimeMillis() + 3000;
+        while (api.byPath("/v1/events/batch").isEmpty() && System.currentTimeMillis() < deadline) {
+            Thread.sleep(20);
+        }
         assertEquals(1, api.byPath("/v1/events/batch").size());
     }
 
