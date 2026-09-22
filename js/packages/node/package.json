@@ -1,0 +1,48 @@
+{
+  "name": "@iforevents/node",
+  "version": "0.1.0",
+  "description": "IForevents analytics SDK for Node.js servers: batching, retries, graceful shutdown, pluggable integrations",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/innovafour/iforevents-js.git",
+    "directory": "packages/node"
+  },
+  "homepage": "https://iforevents.com/docs/sdks/node",
+  "keywords": [
+    "iforevents",
+    "analytics",
+    "node",
+    "server-side",
+    "events"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts --clean --target node18 --external @iforevents/core",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "smoke": "node scripts/smoke.mjs"
+  },
+  "dependencies": {
+    "@iforevents/core": "workspace:^"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

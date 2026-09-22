@@ -1,0 +1,24 @@
+{
+  "name": "@iforevents/react",
+  "version": "0.1.0",
+  "description": "React bindings for the IForevents analytics SDK: provider, hooks and route-aware page views",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/innovafour/iforevents-js.git", "directory": "packages/react" },
+  "homepage": "https://iforevents.com/docs/sdks/react",
+  "keywords": ["iforevents", "analytics", "react", "hooks"],
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js", "require": "./dist/index.cjs" } },
+  "files": ["dist", "README.md", "LICENSE"],
+  "scripts": {
+    "build": "tsup src/index.tsx --format esm,cjs --dts --clean --target es2020 --external react --external @iforevents/core --external @iforevents/browser",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": { "@iforevents/browser": "workspace:^", "@iforevents/core": "workspace:^" },
+  "peerDependencies": { "react": ">=17" },
+  "devDependencies": { "@testing-library/react": "^16.1.0", "@types/react": "^19.0.0", "jsdom": "^26.0.0", "react": "^19.0.0", "react-dom": "^19.0.0" }
+}
