@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <PackageId>IForevents.Segment</PackageId>
+    <Description>Segment adapter for the IForevents analytics SDK (Segment.Analytics.CSharp).</Description>
+    <PackageTags>iforevents;analytics;segment</PackageTags>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="/" />
+    <ProjectReference Include="../IForevents/IForevents.csproj" />
+    <PackageReference Include="Segment.Analytics.CSharp" Version="2.6.0" />
+  </ItemGroup>
+</Project>

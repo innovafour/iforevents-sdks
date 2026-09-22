@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <PackageId>IForevents.PostHog</PackageId>
+    <Description>PostHog adapter for the IForevents analytics SDK (PostHog .NET).</Description>
+    <PackageTags>iforevents;analytics;posthog</PackageTags>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="/" />
+    <ProjectReference Include="../IForevents/IForevents.csproj" />
+    <PackageReference Include="PostHog" Version="2.15.7" />
+  </ItemGroup>
+</Project>
