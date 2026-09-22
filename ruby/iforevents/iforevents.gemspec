@@ -12,8 +12,8 @@ Gem::Specification.new do |spec|
   spec.license = "MIT"
   spec.required_ruby_version = ">= 2.7"
   spec.metadata = {
-    "source_code_uri" => "https://github.com/innovafour/iforevents-ruby",
-    "changelog_uri" => "https://github.com/innovafour/iforevents-ruby/blob/main/CHANGELOG.md",
+    "source_code_uri" => "https://github.com/innovafour/iforevents-sdks/tree/main/ruby",
+    "changelog_uri" => "https://github.com/innovafour/iforevents-sdks/blob/main/ruby/CHANGELOG.md",
     "rubygems_mfa_required" => "true",
   }
   spec.files = Dir["lib/**/*.rb", "README.md", "LICENSE"]

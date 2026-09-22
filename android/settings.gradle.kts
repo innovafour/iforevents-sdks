@@ -9,7 +9,7 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        mavenLocal() // com.iforevents:iforevents from ../iforevents-java during local development
+        mavenLocal() // com.iforevents:iforevents from ../java during local development
     }
 }
 rootProject.name = "iforevents-android"

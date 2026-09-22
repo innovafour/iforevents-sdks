@@ -5,8 +5,8 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/innovafour/iforevents-js.git",
-    "directory": "packages/ga4"
+    "url": "https://github.com/innovafour/iforevents-sdks.git",
+    "directory": "js/packages/ga4"
   },
   "homepage": "https://iforevents.com/docs/sdks/javascript#adapters",
   "keywords": [

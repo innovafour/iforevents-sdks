@@ -1,10 +1,14 @@
-name: Publish to RubyGems
+name: ruby - Publish to RubyGems
 
-# Needs RUBYGEMS_API_KEY in the repository secrets (an API key with push scope).
+# Needs RUBYGEMS_API_KEY in the iforevents-sdks repository secrets (an API key with push scope).
 on:
   push:
     tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'ruby/v[0-9]+.[0-9]+.[0-9]+'
+
+defaults:
+  run:
+    working-directory: ruby
 
 permissions:
   contents: read
@@ -20,7 +24,7 @@ jobs:
       - run: cd iforevents && ruby -Ilib -Itest test/conformance_test.rb
       - name: Version matches the tag
         run: |
-          TAG="${GITHUB_REF#refs/tags/v}"
+          TAG="${GITHUB_REF#refs/tags/ruby/v}"
           V=$(ruby -Iiforevents/lib -e 'require "iforevents/version"; print Iforevents::VERSION')
           [ "$V" = "$TAG" ] || { echo "gem is $V, tag is $TAG"; exit 1; }
       - run: |

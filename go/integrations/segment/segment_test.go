@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	iforevents "github.com/innovafour/iforevents-go"
+	iforevents "github.com/innovafour/iforevents-sdks/go"
 	analytics "github.com/segmentio/analytics-go/v3"
 )
 

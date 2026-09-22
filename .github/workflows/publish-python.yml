@@ -1,12 +1,16 @@
-name: Publish
+name: python - Publish
 
-# Publishes to PyPI through trusted publishing (OIDC): register this
-# repository, workflow file name and the `pypi` environment as a trusted
+# Publishes to PyPI through trusted publishing (OIDC): register
+# innovafour/iforevents-sdks, workflow file publish-python.yml and the `pypi` environment as a trusted
 # publisher on the `iforevents` project at pypi.org once; no token is stored.
 on:
   push:
     tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'python/v[0-9]+.[0-9]+.[0-9]+'
+
+defaults:
+  run:
+    working-directory: python
 
 permissions:
   contents: read
@@ -21,7 +25,7 @@ jobs:
           python-version: '3.12'
       - name: Version matches the tag
         run: |
-          TAG="${GITHUB_REF#refs/tags/v}"
+          TAG="${GITHUB_REF#refs/tags/python/v}"
           VERSION=$(python -c "import tomllib; print(tomllib.load(open('pyproject.toml','rb'))['project']['version'])")
           test "$TAG" = "$VERSION" || { echo "tag v$TAG != pyproject version $VERSION"; exit 1; }
       - run: python -m pip install --quiet '.[all,dev]' build
@@ -30,7 +34,7 @@ jobs:
       - uses: actions/upload-artifact@6f51ac03b9356f520e9adb1b1b7802705f340c2b # v4.5.0
         with:
           name: dist
-          path: dist/
+          path: python/dist/
   publish:
     needs: build
     runs-on: ubuntu-latest

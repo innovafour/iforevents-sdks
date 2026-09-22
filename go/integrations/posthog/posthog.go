@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"sync"
 
-	iforevents "github.com/innovafour/iforevents-go"
+	iforevents "github.com/innovafour/iforevents-sdks/go"
 	ph "github.com/posthog/posthog-go"
 )
 

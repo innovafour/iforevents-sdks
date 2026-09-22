@@ -1,4 +1,4 @@
-name: Publish
+name: php - Publish
 
 # Packagist tracks the GitHub repository: register innovafour/iforevents,
 # innovafour/iforevents-mixpanel and innovafour/iforevents-segment on
@@ -8,7 +8,11 @@ name: Publish
 on:
   push:
     tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'php/v[0-9]+.[0-9]+.[0-9]+'
+
+defaults:
+  run:
+    working-directory: php
 
 permissions:
   contents: read

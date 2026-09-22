@@ -1,9 +1,9 @@
-module github.com/innovafour/iforevents-go/integrations/segment
+module github.com/innovafour/iforevents-sdks/go/integrations/segment
 
 go 1.22
 
 require (
-	github.com/innovafour/iforevents-go v0.1.0
+	github.com/innovafour/iforevents-sdks/go v0.1.0
 	github.com/segmentio/analytics-go/v3 v3.3.0
 )
 
@@ -14,4 +14,4 @@ require (
 	github.com/segmentio/backo-go v1.0.0 // indirect
 )
 
-replace github.com/innovafour/iforevents-go => ../..
+replace github.com/innovafour/iforevents-sdks/go => ../..

@@ -1,4 +1,4 @@
-# iforevents-go
+# IForevents SDK for Go
 
 The IForevents analytics SDK for Go. One facade, pluggable integrations, a
 first-party API integration with batching, retries and typed errors, and the
@@ -6,11 +6,11 @@ public **project key** as the only credential. Same philosophy and vocabulary
 as the Flutter package. No dependencies outside the standard library.
 
 ```bash
-go get github.com/innovafour/iforevents-go
+go get github.com/innovafour/iforevents-sdks/go
 ```
 
 ```go
-import iforevents "github.com/innovafour/iforevents-go"
+import iforevents "github.com/innovafour/iforevents-sdks/go"
 
 api := iforevents.MustAPIIntegration(iforevents.APIConfig{ProjectKey: os.Getenv("IFOREVENTS_PROJECT_KEY")})
 client := iforevents.New(iforevents.WithIntegrations(api))
@@ -37,13 +37,13 @@ switches to a fresh anonymous id (logout).
 
 | Module | Vendor |
 |--------|--------|
-| `github.com/innovafour/iforevents-go/integrations/mixpanel` | `github.com/mixpanel/mixpanel-go` |
-| `github.com/innovafour/iforevents-go/integrations/amplitude` | `github.com/amplitude/analytics-go` |
-| `github.com/innovafour/iforevents-go/integrations/segment` | `github.com/segmentio/analytics-go/v3` |
-| `github.com/innovafour/iforevents-go/integrations/posthog` | `github.com/posthog/posthog-go` |
+| `github.com/innovafour/iforevents-sdks/go/integrations/mixpanel` | `github.com/mixpanel/mixpanel-go` |
+| `github.com/innovafour/iforevents-sdks/go/integrations/amplitude` | `github.com/amplitude/analytics-go` |
+| `github.com/innovafour/iforevents-sdks/go/integrations/segment` | `github.com/segmentio/analytics-go/v3` |
+| `github.com/innovafour/iforevents-sdks/go/integrations/posthog` | `github.com/posthog/posthog-go` |
 
 ```go
-import "github.com/innovafour/iforevents-go/integrations/mixpanel"
+import "github.com/innovafour/iforevents-sdks/go/integrations/mixpanel"
 
 client := iforevents.New(iforevents.WithIntegrations(api, mixpanel.New(mixpanel.Config{Token: "..."})))
 ```
@@ -91,8 +91,8 @@ for m in integrations/*; do (cd $m && go test -race ./...); done
 IFOREVENTS_PROJECT_KEY=pk_... IFOREVENTS_BASE_URL=http://127.0.0.1:8000 go run ./cmd/smoke
 ```
 
-Releases: tag `v0.1.0` on the root module first, then
-`integrations/<name>/v0.1.0` for each adapter (the adapters require the
-root module by version; the `replace` directives only serve local development).
+Releases: tag `go/v0.1.0` on the core module first, then
+`go/integrations/<name>/v0.1.0` for each adapter (the adapters require the
+core module by version; the `replace` directives only serve local development).
 
 MIT

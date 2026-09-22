@@ -9,7 +9,7 @@ import (
 	"os"
 	"time"
 
-	iforevents "github.com/innovafour/iforevents-go"
+	iforevents "github.com/innovafour/iforevents-sdks/go"
 )
 
 func main() {

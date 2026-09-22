@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "IForevents analytics SDK for React Native: device context, AsyncStorage queue, background flush, react-navigation screen tracking",
   "license": "MIT",
-  "repository": { "type": "git", "url": "https://github.com/innovafour/iforevents-js.git", "directory": "packages/react-native" },
+  "repository": { "type": "git", "url": "https://github.com/innovafour/iforevents-sdks.git", "directory": "js/packages/react-native" },
   "homepage": "https://iforevents.com/docs/sdks/react-native",
   "keywords": ["iforevents", "analytics", "react-native", "expo", "events"],
   "type": "module",

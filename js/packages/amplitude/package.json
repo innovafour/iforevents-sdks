@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Amplitude adapter for the IForevents SDK (browser and Node.js)",
   "license": "MIT",
-  "repository": { "type": "git", "url": "https://github.com/innovafour/iforevents-js.git", "directory": "packages/amplitude" },
+  "repository": { "type": "git", "url": "https://github.com/innovafour/iforevents-sdks.git", "directory": "js/packages/amplitude" },
   "homepage": "https://iforevents.com/docs/sdks/javascript#adapters",
   "keywords": ["iforevents", "analytics", "amplitude", "integration"],
   "type": "module",

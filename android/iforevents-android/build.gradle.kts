@@ -31,9 +31,9 @@ mavenPublishing {
     pom {
         name.set("iforevents-android")
         description.set("IForevents analytics SDK for Android: device context, SharedPreferences queue, background delivery, activity screen tracking")
-        url.set("https://github.com/innovafour/iforevents-android")
+        url.set("https://github.com/innovafour/iforevents-sdks/tree/main/android")
         licenses { license { name.set("MIT"); url.set("https://opensource.org/licenses/MIT") } }
         developers { developer { name.set("Innovafour") } }
-        scm { url.set("https://github.com/innovafour/iforevents-android") }
+        scm { url.set("https://github.com/innovafour/iforevents-sdks/tree/main/android") }
     }
 }

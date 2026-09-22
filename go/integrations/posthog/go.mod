@@ -1,9 +1,9 @@
-module github.com/innovafour/iforevents-go/integrations/posthog
+module github.com/innovafour/iforevents-sdks/go/integrations/posthog
 
 go 1.22
 
 require (
-	github.com/innovafour/iforevents-go v0.1.0
+	github.com/innovafour/iforevents-sdks/go v0.1.0
 	github.com/posthog/posthog-go v1.25.3
 )
 
@@ -17,4 +17,4 @@ require (
 	golang.org/x/text v0.21.0 // indirect
 )
 
-replace github.com/innovafour/iforevents-go => ../..
+replace github.com/innovafour/iforevents-sdks/go => ../..

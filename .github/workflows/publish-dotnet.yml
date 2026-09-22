@@ -1,10 +1,14 @@
-name: Publish to NuGet
+name: dotnet - Publish to NuGet
 
-# Needs NUGET_API_KEY (push scope for the IForevents.* ids) in the repository secrets.
+# Needs NUGET_API_KEY (push scope for the IForevents.* ids) in the iforevents-sdks repository secrets.
 on:
   push:
     tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'dotnet/v[0-9]+.[0-9]+.[0-9]+'
+
+defaults:
+  run:
+    working-directory: dotnet
 
 permissions:
   contents: read
@@ -20,7 +24,7 @@ jobs:
       - run: dotnet test IForevents.sln --nologo
       - name: Version matches the tag
         run: |
-          TAG="${GITHUB_REF#refs/tags/v}"
+          TAG="${GITHUB_REF#refs/tags/dotnet/v}"
           V=$(grep -o '<Version>[^<]*' Directory.Build.props | sed 's/<Version>//')
           [ "$V" = "$TAG" ] || { echo "props is $V, tag is $TAG"; exit 1; }
       - run: for p in IForevents IForevents.Segment IForevents.PostHog; do dotnet pack src/$p/$p.csproj -c Release -o artifacts --nologo; done

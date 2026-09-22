@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Segment adapter for the IForevents SDK (browser and Node.js)",
   "license": "MIT",
-  "repository": { "type": "git", "url": "https://github.com/innovafour/iforevents-js.git", "directory": "packages/segment" },
+  "repository": { "type": "git", "url": "https://github.com/innovafour/iforevents-sdks.git", "directory": "js/packages/segment" },
   "homepage": "https://iforevents.com/docs/sdks/javascript#adapters",
   "keywords": ["iforevents", "analytics", "segment", "integration"],
   "type": "module",

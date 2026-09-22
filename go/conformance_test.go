@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	iforevents "github.com/innovafour/iforevents-go"
-	"github.com/innovafour/iforevents-go/internal/testapi"
+	iforevents "github.com/innovafour/iforevents-sdks/go"
+	"github.com/innovafour/iforevents-sdks/go/internal/testapi"
 )
 
 var anonRe = regexp.MustCompile(`^anon_[0-9a-f]{32}$`)

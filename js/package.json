@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "description": "IForevents SDKs for JavaScript: core, browser, node, react, next, react-native and vendor adapters",
   "license": "MIT",
-  "repository": "github:innovafour/iforevents-js",
+  "repository": { "type": "git", "url": "https://github.com/innovafour/iforevents-sdks.git", "directory": "js" },
   "packageManager": "pnpm@11.9.0",
   "engines": { "node": ">=18" },
   "scripts": {

@@ -40,7 +40,7 @@ then your id; `reset()` starts a fresh anonymous id.
 ## Development
 
 Needs the Android SDK (`ANDROID_HOME`) and JDK 17. The core is resolved from
-Maven Central, or from `~/.m2` after `mvn install` in `../iforevents-java`.
+Maven Central, or from `~/.m2` after `mvn install` in `../java`.
 
 ```bash
 gradle test   # Gradle 8.9+; no wrapper is committed

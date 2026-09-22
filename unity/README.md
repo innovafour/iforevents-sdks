@@ -12,7 +12,7 @@ credential.
 Add via git URL in the Package Manager:
 
 ```
-https://github.com/innovafour/iforevents-unity.git#0.1.0
+https://github.com/innovafour/iforevents-sdks.git?path=/unity#unity/v0.1.0
 ```
 
 The package ships `Runtime/Plugins/IForevents.dll` and its netstandard2.0

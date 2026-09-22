@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	amp "github.com/amplitude/analytics-go/amplitude"
-	iforevents "github.com/innovafour/iforevents-go"
+	iforevents "github.com/innovafour/iforevents-sdks/go"
 )
 
 type fake struct {

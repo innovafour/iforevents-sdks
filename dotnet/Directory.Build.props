@@ -9,7 +9,7 @@
     <Company>Innovafour</Company>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://iforevents.com/docs/sdks/dotnet</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/innovafour/iforevents-dotnet</RepositoryUrl>
+    <RepositoryUrl>https://github.com/innovafour/iforevents-sdks</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>

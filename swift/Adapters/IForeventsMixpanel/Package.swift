@@ -2,7 +2,7 @@
 import PackageDescription
 
 // Depends on the core by path during development; consumers resolve
-// https://github.com/innovafour/iforevents-swift by version instead.
+// https://github.com/innovafour/iforevents-sdks by version instead.
 let package = Package(
     name: "IForeventsMixpanel",
     platforms: [.iOS(.v13), .macOS(.v10_15), .tvOS(.v13), .watchOS(.v7)],

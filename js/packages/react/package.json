@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "React bindings for the IForevents analytics SDK: provider, hooks and route-aware page views",
   "license": "MIT",
-  "repository": { "type": "git", "url": "https://github.com/innovafour/iforevents-js.git", "directory": "packages/react" },
+  "repository": { "type": "git", "url": "https://github.com/innovafour/iforevents-sdks.git", "directory": "js/packages/react" },
   "homepage": "https://iforevents.com/docs/sdks/react",
   "keywords": ["iforevents", "analytics", "react", "hooks"],
   "type": "module",

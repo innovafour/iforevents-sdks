@@ -24,8 +24,8 @@
     </developer>
   </developers>
   <scm>
-    <url>https://github.com/innovafour/iforevents-java</url>
-    <connection>scm:git:https://github.com/innovafour/iforevents-java.git</connection>
+    <url>https://github.com/innovafour/iforevents-sdks/tree/main/java</url>
+    <connection>scm:git:https://github.com/innovafour/iforevents-sdks.git</connection>
   </scm>
 
   <modules>

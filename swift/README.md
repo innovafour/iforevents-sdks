@@ -7,7 +7,7 @@ offline queue in `UserDefaults`, retries and typed errors, and the public
 
 ```swift
 // Package.swift
-.package(url: "https://github.com/innovafour/iforevents-swift.git", from: "0.1.0")
+.package(url: "https://github.com/innovafour/iforevents-sdks.git", from: "0.1.0")
 ```
 
 ```swift

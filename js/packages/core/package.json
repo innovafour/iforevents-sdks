@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "IForevents analytics SDK core: facade, pluggable integrations and the first-party API integration with batching, offline queue and retries",
   "license": "MIT",
-  "repository": { "type": "git", "url": "https://github.com/innovafour/iforevents-js.git", "directory": "packages/core" },
+  "repository": { "type": "git", "url": "https://github.com/innovafour/iforevents-sdks.git", "directory": "js/packages/core" },
   "homepage": "https://iforevents.com/docs/sdks/javascript",
   "keywords": ["iforevents", "analytics", "events", "tracking", "product-analytics"],
   "type": "module",

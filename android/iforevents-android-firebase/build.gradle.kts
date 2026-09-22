@@ -32,9 +32,9 @@ mavenPublishing {
     pom {
         name.set("iforevents-android-firebase")
         description.set("Firebase Analytics adapter for the IForevents Android SDK")
-        url.set("https://github.com/innovafour/iforevents-android")
+        url.set("https://github.com/innovafour/iforevents-sdks/tree/main/android")
         licenses { license { name.set("MIT"); url.set("https://opensource.org/licenses/MIT") } }
         developers { developer { name.set("Innovafour") } }
-        scm { url.set("https://github.com/innovafour/iforevents-android") }
+        scm { url.set("https://github.com/innovafour/iforevents-sdks/tree/main/android") }
     }
 }

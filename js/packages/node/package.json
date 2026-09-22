@@ -5,8 +5,8 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/innovafour/iforevents-js.git",
-    "directory": "packages/node"
+    "url": "https://github.com/innovafour/iforevents-sdks.git",
+    "directory": "js/packages/node"
   },
   "homepage": "https://iforevents.com/docs/sdks/node",
   "keywords": [

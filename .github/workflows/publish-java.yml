@@ -1,12 +1,16 @@
-name: Publish to Maven Central
+name: java - Publish to Maven Central
 
 # Needs the Sonatype Central portal credentials (CENTRAL_USERNAME, CENTRAL_PASSWORD)
-# and a GPG key (GPG_PRIVATE_KEY, GPG_PASSPHRASE) in the repository secrets, and the
+# and a GPG key (GPG_PRIVATE_KEY, GPG_PASSPHRASE) in the iforevents-sdks repository secrets, and the
 # com.iforevents namespace verified on central.sonatype.com.
 on:
   push:
     tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
+      - 'java/v[0-9]+.[0-9]+.[0-9]+'
+
+defaults:
+  run:
+    working-directory: java
 
 permissions:
   contents: read
@@ -28,7 +32,7 @@ jobs:
           gpg-passphrase: GPG_PASSPHRASE
       - name: Version matches the tag
         run: |
-          TAG="${GITHUB_REF#refs/tags/v}"
+          TAG="${GITHUB_REF#refs/tags/java/v}"
           V=$(mvn -q -ntp help:evaluate -Dexpression=project.version -DforceStdout)
           [ "$V" = "$TAG" ] || { echo "pom is $V, tag is $TAG"; exit 1; }
       - run: mvn -B -ntp -P release deploy
