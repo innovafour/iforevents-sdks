@@ -1,0 +1,9 @@
+# Unity / IDE noise; the UPM package itself is the tracked tree
+.idea/
+.vs/
+*.csproj
+*.sln
+Library/
+Temp/
+Logs/
+obj/

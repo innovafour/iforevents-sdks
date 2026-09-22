@@ -1,0 +1,11 @@
+{
+  "name": "com.iforevents.sdk",
+  "version": "0.1.0",
+  "displayName": "IForevents Analytics",
+  "description": "IForevents analytics SDK for Unity: device context, PlayerPrefs storage, batching and retries on top of the .NET IForevents core. Project key only.",
+  "unity": "2021.3",
+  "license": "MIT",
+  "author": { "name": "Innovafour", "url": "https://iforevents.com" },
+  "keywords": ["analytics", "events", "iforevents"],
+  "samples": [{ "displayName": "Basic", "description": "Init, identify, track and screen calls", "path": "Samples~/Basic" }]
+}
