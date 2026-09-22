@@ -1,0 +1,41 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "iforevents"
+version = "0.1.0"
+description = "IForevents analytics SDK for Python: one facade, pluggable integrations, batching, retries and the public project key as the only credential"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.9"
+authors = [{ name = "Innovafour" }]
+keywords = ["iforevents", "analytics", "events", "tracking", "product-analytics"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Topic :: Software Development :: Libraries",
+]
+dependencies = []
+
+[project.optional-dependencies]
+mixpanel = ["mixpanel>=4.10"]
+amplitude = ["amplitude-analytics>=1.1"]
+segment = ["segment-analytics-python>=2.2"]
+posthog = ["posthog>=3.0"]
+all = ["mixpanel>=4.10", "amplitude-analytics>=1.1", "segment-analytics-python>=2.2", "posthog>=3.0"]
+dev = ["pytest>=8.0"]
+
+[project.urls]
+Homepage = "https://iforevents.com/docs/sdks/python"
+Repository = "https://github.com/innovafour/iforevents-python"
+Issues = "https://github.com/innovafour/iforevents-python/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["iforevents"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
