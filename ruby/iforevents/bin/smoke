@@ -1,0 +1,20 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Real-api smoke: IFOREVENTS_PROJECT_KEY and IFOREVENTS_BASE_URL must be set.
+$LOAD_PATH.unshift(File.expand_path("../lib", __dir__))
+require "iforevents"
+require "json"
+
+key = ENV["IFOREVENTS_PROJECT_KEY"]
+base = ENV.fetch("IFOREVENTS_BASE_URL", "https://api.iforevents.com")
+abort("IFOREVENTS_PROJECT_KEY missing") if key.to_s.empty?
+errors = []
+client = Iforevents.new(project_key: key, base_url: base, batch_size: 2, on_error: ->(e) { errors << e.message }, flush_at_exit: false)
+api = client.integrations.first
+identify = client.identify("smoke_ruby_#{Time.now.to_i}", email: "smoke@example.com", plan: "free", nested: { deep: true })
+client.track("smoke_track", n: 1)
+client.page("/smoke")
+client.shutdown
+puts JSON.generate(identify: identify[0].success, user_id: api.user_id, queued: api.queued_events, errors: errors)
+exit(identify[0].success && errors.empty? && !api.user_id.nil? ? 0 : 1)
