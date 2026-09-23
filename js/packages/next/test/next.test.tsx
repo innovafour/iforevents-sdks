@@ -21,8 +21,8 @@ describe("@iforevents/next", () => {
     view.rerender(<IforeventsProvider client={client}>z</IforeventsProvider>);
     await sleep(10);
     expect(calls).toEqual([
-      ["/", { search: "" }, { navigationType: "load", previousRoute: undefined, toRoute: "/" }],
-      ["/pricing", { search: "plan=pro" }, { navigationType: "route", previousRoute: "/", toRoute: "/pricing?plan=pro" }],
+      ["/", {}, { navigationType: "load", previousRoute: undefined, toRoute: "/" }],
+      ["/pricing", {}, { navigationType: "route", previousRoute: "/", toRoute: "/pricing?plan=pro" }],
     ]);
   });
 

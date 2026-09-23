@@ -70,19 +70,18 @@ final class ConformanceTests: XCTestCase {
         XCTAssertTrue(api.isIdentified)
     }
 
-    func test02_trackAfterIdentifyCarriesUserIdAndTraits() {
+    func test02_trackAfterIdentifyCarriesUserIdAndOnlyItsOwnProperties() {
         let ife = boot(make { $0.batchSize = 1 })
         ife.identify("user_1", traits: ["plan": "pro"])
-        ife.track("clicked", properties: ["button": "buy", "plan": "override"])
+        ife.track("clicked", properties: ["button": "buy"])
         ife.wait()
         let req = MockAPI.byPath("/v1/events/track")[0]
         XCTAssertEqual(req.header("X-User-Id"), "user_1")
         XCTAssertEqual(req.body["event_name"] as? String, "clicked")
         XCTAssertEqual(req.body["event_type"] as? String, "track")
         let props = req.body["properties"] as? [String: Any]
-        XCTAssertEqual(props?["plan"] as? String, "override")
+        XCTAssertEqual(props?.count, 1)
         XCTAssertEqual(props?["button"] as? String, "buy")
-        XCTAssertEqual(props?["device_platform"] as? String, "test")
     }
 
     func test03_batchSizeNSendsOnNth() {

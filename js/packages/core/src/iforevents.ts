@@ -24,7 +24,8 @@ export interface PageOptions {
 /**
  * The facade: one `init`, then `identify`, `track`, `page`, `reset`, `flush`
  * and `shutdown` fan out to every integration in isolation. Identify traits
- * are remembered and merged under later track properties; nested objects are
+ * go to every integration once, on identify; they are not copied into later
+ * events (each backend keeps them on the user's profile). Nested objects are
  * flattened with `_`. Mirrors the `Iforevents` class of the Flutter package.
  */
 export class Iforevents {
@@ -84,9 +85,8 @@ export class Iforevents {
   async track(name: string, properties: Properties = {}): Promise<IntegrationResult[]> {
     if (!name) return [];
     if (!this.ready("track")) return [];
-    const merged = flatten({ ...this.traits, ...properties });
     const timestamp = new Date();
-    return this.fanOut((i) => i.track({ name, type: "track", properties: merged, timestamp }));
+    return this.fanOut((i) => i.track({ name, type: "track", properties: flatten(properties), timestamp }));
   }
 
   async page(name?: string, properties: Properties = {}, options: PageOptions = {}): Promise<IntegrationResult[]> {

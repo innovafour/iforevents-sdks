@@ -3,7 +3,8 @@ import Foundation
 /// The facade: one `initialize`, then `identify`, `track`, `page`/`screen`,
 /// `reset`, `flush` and `shutdown` fan out to every integration in isolation
 /// on a private serial queue, so calls never block the caller. Identify
-/// traits are remembered and merged under later track properties; nested
+/// traits go to every integration once, on identify, and are not copied
+/// into later events (each backend keeps them on the profile); nested
 /// dictionaries are flattened with `_`. Mirrors the Flutter `Iforevents`.
 public final class Iforevents {
     public typealias Completion = ([IntegrationResult]) -> Void
@@ -61,9 +62,7 @@ public final class Iforevents {
     public func track(_ name: String, properties: Properties = [:], completion: Completion? = nil) {
         queue.async {
             guard !name.isEmpty, self.ready("track") else { completion?([]); return }
-            var merged = self.traits
-            merged.merge(properties) { _, new in new }
-            let event = TrackEvent(name: name, type: .track, properties: flatten(merged))
+            let event = TrackEvent(name: name, type: .track, properties: flatten(properties))
             // Compute first: `completion?(expr)` skips `expr` entirely when completion is nil.
             let results = self.fanOut { try $0.track(event) }
             completion?(results)

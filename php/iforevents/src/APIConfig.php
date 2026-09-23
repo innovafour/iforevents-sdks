@@ -14,9 +14,9 @@ final class APIConfig
 {
     public string $baseUrl = 'https://api.iforevents.com';
     /** Events per request (1..500); 1 disables batching. */
-    public int $batchSize = 10;
+    public int $batchSize = 20;
     /** PHP has no timers: a partial batch older than this (seconds) is sent with the next track. */
-    public float $flushInterval = 5.0;
+    public float $flushInterval = 10.0;
     public float $timeout = 10.0;
     public int $maxRetries = 3;
     public float $retryDelay = 1.0;

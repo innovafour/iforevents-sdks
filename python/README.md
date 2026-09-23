@@ -66,8 +66,8 @@ class ConsoleIntegration(Integration):
 |--------|---------|---------|
 | `project_key` | required | public write key |
 | `base_url` | `https://api.iforevents.com` | api origin (self-hosted: your host) |
-| `batch_size` | `10` | events per request; 1 disables batching; max 500 |
-| `flush_interval` | `5.0` s | how long a partial batch waits |
+| `batch_size` | `20` | events per request; 1 disables batching; max 500 |
+| `flush_interval` | `10.0` s | how long a partial batch waits |
 | `timeout` | `10.0` s | per request |
 | `max_retries` / `retry_delay` | `3` / `1.0` s | linear backoff, `Retry-After` honored |
 | `requeue_failed_events` | `True` | keep events after transient failures |

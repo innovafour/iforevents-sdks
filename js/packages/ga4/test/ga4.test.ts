@@ -16,7 +16,7 @@ describe("@iforevents/ga4", () => {
       ["config", "G-1", { send_page_view: false }],
       ["config", "G-1", { user_id: "u", send_page_view: false }],
       ["set", "user_properties", { plan: "pro" }],
-      ["event", "buy", { plan: "pro", value: 1 }],
+      ["event", "buy", { value: 1 }],
       ["event", "page_view", { page_title: "Home", page_path: "/" }],
       ["config", "G-1", { user_id: null, send_page_view: false }],
     ]);

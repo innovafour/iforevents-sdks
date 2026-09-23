@@ -54,7 +54,7 @@ class AmplitudeIntegrationTest {
         assertEquals("gold", events.get(1).userProperties.getJSONObject("$set").getString("tier"));
         assertEquals("u", events.get(2).userId);
         assertEquals(1, events.get(2).eventProperties.getInt("amount"));
-        assertEquals("gold", events.get(2).eventProperties.getString("tier"));
+        assertTrue(!events.get(2).eventProperties.has("tier"));
         assertTrue(events.get(2).timestamp > 0);
         assertEquals("Home", events.get(3).eventType);
         assertEquals(1, flushes[0]);

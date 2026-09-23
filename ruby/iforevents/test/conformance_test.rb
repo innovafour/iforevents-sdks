@@ -50,13 +50,13 @@ class ConformanceTest < Minitest::Test
     assert integration.identified?
   end
 
-  def test_02_track_after_identify_carries_user_id_and_traits
+  def test_02_track_after_identify_carries_user_id_and_only_its_own_properties
     client, = boot(batch_size: 1)
     client.identify("user_1", plan: "pro")
-    client.track("clicked", button: "buy", plan: "override")
+    client.track("clicked", button: "buy")
     req = API.by_path("/v1/events/track").first
     assert_equal "user_1", req.header("x-user-id")
-    assert_equal({ "event_name" => "clicked", "event_type" => "track", "properties" => { "device_platform" => "test", "sdk_name" => "iforevents-ruby", "plan" => "override", "button" => "buy" } }, req.body)
+    assert_equal({ "event_name" => "clicked", "event_type" => "track", "properties" => { "button" => "buy" } }, req.body)
   end
 
   def test_03_batch_size_n_sends_on_nth

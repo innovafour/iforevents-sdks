@@ -63,14 +63,14 @@ final class ConformanceTest extends TestCase
         self::assertTrue($api->isIdentified());
     }
 
-    public function test02TrackAfterIdentifyCarriesUserIdAndTraits(): void
+    public function test02TrackAfterIdentifyCarriesUserIdAndOnlyItsOwnProperties(): void
     {
         [$client] = $this->boot(['batchSize' => 1]);
         $client->identify('user_1', ['plan' => 'pro']);
-        $client->track('clicked', ['button' => 'buy', 'plan' => 'override']);
+        $client->track('clicked', ['button' => 'buy']);
         $req = $this->api->byPath('/v1/events/track')[0];
         self::assertSame('user_1', $req['headers']['x-user-id']);
-        self::assertSame(['event_name' => 'clicked', 'event_type' => 'track', 'properties' => ['device_platform' => 'test', 'sdk_name' => 'iforevents-php', 'plan' => 'override', 'button' => 'buy']], $req['body']);
+        self::assertSame(['event_name' => 'clicked', 'event_type' => 'track', 'properties' => ['button' => 'buy']], $req['body']);
     }
 
     public function test03BatchSizeNSendsOnNth(): void

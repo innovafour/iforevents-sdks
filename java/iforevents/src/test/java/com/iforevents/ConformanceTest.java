@@ -105,15 +105,15 @@ class ConformanceTest {
     }
 
     @Test
-    void t02_track_after_identify_carries_user_id_and_traits() {
+    void t02_track_after_identify_carries_user_id_and_only_its_own_properties() {
         Iforevents ife = boot(make(cfg().batchSize(1)));
         ife.identify("user_1", map("plan", "pro"));
-        ife.track("clicked", map("button", "buy", "plan", "override"));
+        ife.track("clicked", map("button", "buy"));
         MockApi.Recorded req = api.byPath("/v1/events/track").get(0);
         assertEquals("user_1", req.header("X-User-Id"));
         assertEquals("clicked", req.body.get("event_name"));
         assertEquals("track", req.body.get("event_type"));
-        assertEquals(map("plan", "override", "button", "buy", "device_platform", "test", "sdk_name", "iforevents-java"), req.body.get("properties"));
+        assertEquals(map("button", "buy"), req.body.get("properties"));
     }
 
     @Test

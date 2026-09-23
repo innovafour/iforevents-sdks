@@ -60,8 +60,8 @@ you can pass an instance you configured yourself, or a fake in tests.
 | Field | Default | Meaning |
 |-------|---------|---------|
 | `baseUrl` | `https://api.iforevents.com` | api origin (self-hosted: your host) |
-| `batchSize` | `10` | events per request; 1 disables batching; max 500 |
-| `flushInterval` | `5` s | how long a partial batch waits |
+| `batchSize` | `20` | events per request; 1 disables batching; max 500 |
+| `flushInterval` | `10` s | how long a partial batch waits |
 | `timeout` | `10` s | per request |
 | `maxRetries` / `retryDelay` | `3` / `1` s | linear backoff, `Retry-After` honored |
 | `requeueFailedEvents` | `true` | keep events after transient failures |

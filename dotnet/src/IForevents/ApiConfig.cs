@@ -19,9 +19,9 @@ namespace IForevents
         public string ProjectKey { get; }
         public string BaseUrl { get; set; } = "https://api.iforevents.com";
         /// <summary>Events per request (1..500); 1 disables batching.</summary>
-        public int BatchSize { get; set; } = 10;
+        public int BatchSize { get; set; } = 20;
         /// <summary>How long a partial batch waits.</summary>
-        public TimeSpan FlushInterval { get; set; } = TimeSpan.FromSeconds(5);
+        public TimeSpan FlushInterval { get; set; } = TimeSpan.FromSeconds(10);
         public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(10);
         public int MaxRetries { get; set; } = 3;
         public TimeSpan RetryDelay { get; set; } = TimeSpan.FromSeconds(1);

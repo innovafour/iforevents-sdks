@@ -20,7 +20,7 @@ describe("@iforevents/posthog", () => {
     await ife.reset();
     expect(calls).toEqual([
       ["identify", "u", { plan: "pro" }],
-      ["capture", "t", { plan: "pro", a: 1 }],
+      ["capture", "t", { a: 1 }],
       ["capture", "$pageview", { screen_name: "Home" }],
       ["reset"],
     ]);

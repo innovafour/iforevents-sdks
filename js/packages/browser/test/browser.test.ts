@@ -30,13 +30,14 @@ describe("@iforevents/browser", () => {
     expect(typeof ctx.user_agent).toBe("string");
   });
 
-  it("page() adds path, url, referrer and title and sends a page_view", async () => {
+  it("page() adds url, referrer and title (the api derives the path) and sends a page_view", async () => {
     const client = createBrowserIforevents("pk_test", { baseUrl: api.baseUrl, batchSize: 1 });
     await client.page({ section: "hero" });
     const [req] = api.byPath("/v1/events/track");
     expect(req?.body.event_type).toBe("page_view");
     const props = req?.body.properties as Record<string, unknown>;
-    expect(props.page).toBe(window.location.pathname);
+    expect(props.page).toBeUndefined();
+    expect(props.search).toBeUndefined();
     expect(props.url).toBe(window.location.href);
     expect(props.section).toBe("hero");
     expect(props.to_route).toBe(window.location.pathname);

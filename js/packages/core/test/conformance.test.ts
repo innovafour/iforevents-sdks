@@ -62,13 +62,13 @@ describe("IForeventsAPIIntegration conformance", () => {
     expect(integration.isIdentified).toBe(true);
   });
 
-  it("2. track after identify carries X-User-Id and the merged traits", async () => {
+  it("2. track after identify carries X-User-Id and only its own properties", async () => {
     const { iforevents } = await boot({ batchSize: 1 });
     await iforevents.identify("user_1", { plan: "pro" });
-    await iforevents.track("clicked", { button: "buy", plan: "override" });
+    await iforevents.track("clicked", { button: "buy" });
     const [req] = api.byPath("/v1/events/track");
     expect(req?.headers["x-user-id"]).toBe("user_1");
-    expect(req?.body).toEqual({ event_name: "clicked", event_type: "track", properties: { plan: "override", button: "buy", device_platform: "test", sdk_name: "@iforevents/core" } });
+    expect(req?.body).toEqual({ event_name: "clicked", event_type: "track", properties: { button: "buy" } });
   });
 
   it("3. batchSize N sends nothing for N-1 events and one /batch with N events on the Nth", async () => {

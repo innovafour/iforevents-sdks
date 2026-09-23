@@ -5,7 +5,8 @@ require "monitor"
 module Iforevents
   # The facade: one +init+, then +identify+ / +track+ / +page+ / +reset+ /
   # +flush+ / +shutdown+ fan out to every integration in isolation. Identify
-  # traits are remembered and merged under later track properties; nested
+  # traits go to every integration once, on identify, and are not copied
+  # into later events (each backend keeps them on the profile); nested
   # hashes are flattened with "_". Mirrors the Flutter +Iforevents+ class.
   class Client
     attr_reader :integrations
@@ -57,8 +58,7 @@ module Iforevents
     def track(name, properties = {})
       return [] if name.to_s.empty? || !ready?("track")
 
-      merged = @lock.synchronize { @traits.merge(stringify(properties)) }
-      event = TrackEvent.new(name: name, properties: Iforevents.flatten(merged))
+      event = TrackEvent.new(name: name, properties: Iforevents.flatten(stringify(properties)))
       fan_out { |i| i.track(event) }
     end
 

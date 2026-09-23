@@ -9,7 +9,8 @@ import (
 
 // Client is the facade: one Init, then Identify, Track, Page, Reset, Flush
 // and Shutdown fan out to every integration in isolation. Identify traits
-// are remembered and merged under later Track properties; nested maps are
+// go to every integration once, on Identify, and are not copied into later
+// events (each backend keeps them on the profile); nested maps are
 // flattened with "_". Mirrors the Iforevents class of the Flutter package.
 type Client struct {
 	mu           sync.RWMutex
@@ -130,16 +131,7 @@ func (c *Client) Track(ctx context.Context, name string, properties Properties) 
 	if name == "" || !c.ready("Track") {
 		return nil
 	}
-	merged := Properties{}
-	c.mu.RLock()
-	for k, v := range c.traits {
-		merged[k] = v
-	}
-	c.mu.RUnlock()
-	for k, v := range properties {
-		merged[k] = v
-	}
-	event := TrackEvent{Name: name, Type: EventTypeTrack, Properties: Flatten(merged), Timestamp: time.Now()}
+	event := TrackEvent{Name: name, Type: EventTypeTrack, Properties: Flatten(properties), Timestamp: time.Now()}
 	return c.fanOut(func(i Integration) error { return i.Track(ctx, event) })
 }
 

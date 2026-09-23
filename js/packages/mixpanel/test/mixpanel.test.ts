@@ -23,7 +23,7 @@ describe("@iforevents/mixpanel", () => {
     expect(calls).toEqual([
       ["identify", "u1"],
       ["people.set", { email: "a@b.c", nested_x: 1 }],
-      ["track", "buy", { email: "a@b.c", nested_x: 1, total: 9 }],
+      ["track", "buy", { total: 9 }],
       ["track", "/home", { navigation_type: "load" }],
       ["reset"],
     ]);
@@ -52,7 +52,8 @@ describe("@iforevents/mixpanel", () => {
     await ife.track("anon_again");
     const tracks = calls.filter((c) => (c as unknown[])[0] === "track") as Array<[string, string, Record<string, unknown>]>;
     expect(tracks[0]?.[2].distinct_id).toBeUndefined();
-    expect(tracks[1]?.[2]).toMatchObject({ distinct_id: "u9", plan: "pro", amount: 1 });
+    expect(tracks[1]?.[2]).toMatchObject({ distinct_id: "u9", amount: 1 });
+    expect(tracks[1]?.[2]).not.toHaveProperty("plan");
     expect(typeof tracks[1]?.[2].time).toBe("number");
     expect(tracks[2]?.[2].distinct_id).toBeUndefined();
     expect(calls[1]).toEqual(["people.set", "u9", { plan: "pro" }]);
