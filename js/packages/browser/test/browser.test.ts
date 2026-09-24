@@ -1,6 +1,6 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { MockApi, sleep } from "../../core/test/mock-server";
-import { Iforevents, browserContext, createBrowserIforevents, parseUserAgent } from "../src/index";
+import { Iforevents, browserContext, browserEventContext, createBrowserIforevents, parseUserAgent } from "../src/index";
 
 const api = new MockApi();
 beforeAll(() => api.start());
@@ -28,6 +28,25 @@ describe("@iforevents/browser", () => {
     expect(ctx.sdk_name).toBe("@iforevents/browser");
     expect(ctx.device_app_version).toBe("2.1.0");
     expect(typeof ctx.user_agent).toBe("string");
+  });
+
+  it("sends the schema 2 context: library, device type, locale, time zone and the page's campaign", async () => {
+    history.pushState({}, "", "/landing?utm_source=newsletter&utm_medium=email&utm_campaign=september&other=1");
+    const ctx = browserEventContext("2.1.0");
+    expect(ctx.library).toEqual({ name: "@iforevents/browser", version: expect.any(String) });
+    expect(ctx.device).toEqual({ type: "web" });
+    expect(ctx.app).toEqual({ version: "2.1.0" });
+    expect(ctx.campaign).toEqual({ source: "newsletter", medium: "email", name: "september" });
+    expect(typeof ctx.timezone).toBe("string");
+
+    const client = createBrowserIforevents("pk_test", { baseUrl: api.baseUrl, batchSize: 1, appVersion: "2.1.0" });
+    await client.track("clicked");
+    const [req] = api.byPath("/v1/events/track");
+    expect((req?.body.context as { library?: { name?: string } }).library?.name).toBe("@iforevents/browser");
+    expect((req?.body.context as { campaign?: unknown }).campaign).toEqual({ source: "newsletter", medium: "email", name: "september" });
+    expect(req?.body.anonymous_id).toMatch(/^anon_[0-9a-f]{32}$/);
+    expect(typeof req?.body.message_id).toBe("string");
+    history.pushState({}, "", "/");
   });
 
   it("page() adds url, referrer and title (the api derives the path) and sends a page_view", async () => {

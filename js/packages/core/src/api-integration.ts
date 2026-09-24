@@ -1,7 +1,8 @@
+import { defaultEventContext } from "./context";
 import { IForeventsAPIError, IForeventsQuotaExceededError, classifyResponse } from "./errors";
 import { Integration, type IntegrationHooks } from "./integration";
 import { MemoryStorage, type Storage } from "./storage";
-import type { EventType, IdentifyEvent, Logger, PageEvent, Properties, TrackEvent } from "./types";
+import type { EventContext, EventContextProvider, EventType, IdentifyEvent, Logger, PageEvent, Properties, TrackEvent } from "./types";
 
 /**
  * Configuration of the first-party API integration.
@@ -45,6 +46,12 @@ export interface IForeventsAPIConfig {
   fetch?: typeof fetch;
   /** Value of the `User-Agent` header where the runtime allows setting it (servers). */
   userAgent?: string;
+  /**
+   * The device and app context sent as `context` with every request. The
+   * platform packages (browser, node, react-native) fill it; the default
+   * names the library alone.
+   */
+  eventContext?: EventContextProvider;
   logger?: Logger;
 }
 
@@ -54,6 +61,8 @@ export interface QueuedEvent {
   type: EventType;
   properties: Properties;
   created_at: string;
+  /** Unique per call; destinations deduplicate retried deliveries on it. */
+  message_id?: string;
 }
 
 export interface QueueStatus {
@@ -62,10 +71,14 @@ export interface QueueStatus {
   isInitialized: boolean;
   isIdentified: boolean;
   userId: string | null;
+  anonymousId: string | null;
 }
 
 const USER_KEY = "iforevents_user_id";
 const IDENTIFIED_KEY = "iforevents_user_identified";
+// The anon_ id of this visitor, kept after identify (sent as anonymous_id
+// so destinations can merge the anonymous history) until reset.
+const ANONYMOUS_KEY = "iforevents_anonymous_id";
 const QUEUE_KEY = "iforevents_queue";
 const MAX_BATCH = 500;
 const DEFAULT_BASE_URL = "https://api.iforevents.com";
@@ -87,6 +100,8 @@ export class IForeventsAPIIntegration extends Integration {
   private timer: ReturnType<typeof setTimeout> | null = null;
   private inflight: Promise<void> = Promise.resolve();
   private userId: string | null = null;
+  private anonId: string | null = null;
+  private readonly eventContext: EventContextProvider;
   private initialized = false;
   private identified = false;
   private quotaExceeded = false;
@@ -120,6 +135,7 @@ export class IForeventsAPIIntegration extends Integration {
     // window.fetch throws "Illegal invocation" unless called on the window.
     this.fetchImpl = f.bind(globalThis);
     this.logger = this.config.debug ? (config.logger ?? console) : null;
+    this.eventContext = config.eventContext ?? defaultEventContext;
   }
 
   // --- state -----------------------------------------------------------------
@@ -137,6 +153,10 @@ export class IForeventsAPIIntegration extends Integration {
   get currentUserId(): string | null {
     return this.userId;
   }
+  /** The `anon_...` id of this visitor, sent as `anonymous_id`; it survives identify and changes on reset. */
+  get currentAnonymousId(): string | null {
+    return this.anonId;
+  }
   get queuedEventsCount(): number {
     return this.queue.length;
   }
@@ -145,21 +165,26 @@ export class IForeventsAPIIntegration extends Integration {
     return this.quotaExceeded;
   }
   getQueueStatus(): QueueStatus {
-    return { queuedEvents: this.queue.length, batchSize: this.config.batchSize, isInitialized: this.initialized, isIdentified: this.identified, userId: this.userId };
+    return { queuedEvents: this.queue.length, batchSize: this.config.batchSize, isInitialized: this.initialized, isIdentified: this.identified, userId: this.userId, anonymousId: this.anonId };
   }
 
   // --- Integration ------------------------------------------------------------
 
   override async init(): Promise<void> {
     await super.init();
+    let anon = await this.storage.get(ANONYMOUS_KEY);
     const stored = await this.storage.get(USER_KEY);
     if (stored) {
       this.userId = stored;
       this.identified = (await this.storage.get(IDENTIFIED_KEY)) === "true";
-    } else {
+      // Storage written before anonymous_id existed: an unidentified user id is the anon id.
+      if (!anon && !this.identified) anon = stored;
+    }
+    await this.setAnonymous(anon || anonymousId());
+    if (!stored) {
       // A fresh visitor: attribute everything to an anonymous id we own, so the
       // api never has to fingerprint the address (which merges users behind a NAT).
-      await this.setUser(anonymousId(), false);
+      await this.setUser(this.anonId!, false);
     }
     if (this.config.persistQueue) {
       const raw = await this.storage.get(QUEUE_KEY);
@@ -182,7 +207,7 @@ export class IForeventsAPIIntegration extends Integration {
   override async identify(event: IdentifyEvent): Promise<void> {
     await super.identify(event);
     const { email, name, phone_number, ...properties } = event.traits;
-    const body: Record<string, unknown> = { custom_id: event.customId, properties };
+    const body: Record<string, unknown> = { custom_id: event.customId, properties, message_id: messageId() };
     if (typeof email === "string" && email) body.email = email;
     if (typeof name === "string" && name) body.name = name;
     if (typeof phone_number === "string" && phone_number) body.phone_number = phone_number;
@@ -190,7 +215,7 @@ export class IForeventsAPIIntegration extends Integration {
     // api creates the profile on the first event it sees for this id.
     await this.setUser(event.customId, true);
     try {
-      await this.request("/v1/events/identify", body);
+      await this.request("/v1/events/identify", { ...body, ...(await this.envelope()) });
     } catch (error) {
       this.report(error);
       if (this.config.throwOnError) throw error;
@@ -199,10 +224,16 @@ export class IForeventsAPIIntegration extends Integration {
 
   override async track(event: TrackEvent): Promise<void> {
     await super.track(event);
-    const queued: QueuedEvent = { name: event.name, type: event.type, properties: event.properties, created_at: event.timestamp.toISOString() };
+    const queued: QueuedEvent = { name: event.name, type: event.type, properties: event.properties, created_at: event.timestamp.toISOString(), message_id: messageId() };
     if (this.config.batchSize <= 1) {
       try {
-        await this.request("/v1/events/track", { event_name: queued.name, event_type: queued.type, properties: queued.properties });
+        await this.request("/v1/events/track", {
+          event_name: queued.name,
+          event_type: queued.type,
+          properties: queued.properties,
+          message_id: queued.message_id,
+          ...(await this.envelope()),
+        });
       } catch (error) {
         this.report(error);
         if (this.config.throwOnError) throw error;
@@ -229,7 +260,8 @@ export class IForeventsAPIIntegration extends Integration {
     await super.reset();
     await this.flush();
     // Forget the person; the next events belong to a fresh anonymous id.
-    await this.setUser(anonymousId(), false);
+    await this.setAnonymous(anonymousId());
+    await this.setUser(this.anonId!, false);
   }
 
   /** Sends the whole queue now, 500 events per request. Resolves when done. */
@@ -258,7 +290,7 @@ export class IForeventsAPIIntegration extends Integration {
     while (this.queue.length > 0) {
       const events = this.queue.splice(0, MAX_BATCH);
       try {
-        await this.request("/v1/events/batch", { events }, keepalive);
+        await this.request("/v1/events/batch", { events, ...(await this.envelope()) }, keepalive);
         await this.persist();
       } catch (error) {
         const apiError = error instanceof IForeventsAPIError ? error : new IForeventsAPIError(String(error), { cause: error });
@@ -286,6 +318,25 @@ export class IForeventsAPIIntegration extends Integration {
     }, this.config.flushInterval);
     // Never keep a server process alive just for a pending batch.
     (this.timer as { unref?: () => void }).unref?.();
+  }
+
+  /**
+   * What every request adds to its events (schema 2 of the events bus): the
+   * anonymous id, the send time on this clock and the device context.
+   */
+  private async envelope(): Promise<{ anonymous_id?: string; sent_at: string; context: EventContext }> {
+    let context: EventContext = {};
+    try {
+      context = (await this.eventContext()) ?? {};
+    } catch (error) {
+      this.logger?.warn("[iforevents] event context provider failed", error);
+    }
+    return { ...(this.anonId ? { anonymous_id: this.anonId } : {}), sent_at: new Date().toISOString(), context };
+  }
+
+  private async setAnonymous(id: string): Promise<void> {
+    this.anonId = id;
+    await this.storage.set(ANONYMOUS_KEY, id);
   }
 
   private async setUser(id: string, identified: boolean): Promise<void> {
@@ -364,6 +415,16 @@ export class IForeventsAPIIntegration extends Integration {
 
 /** A fresh anonymous id, unrelated to anything the server derives: anon_<uuid4 without dashes>. */
 export function anonymousId(): string {
+  return `anon_${uuid4Hex()}`;
+}
+
+/** A fresh message id: a UUID v4, unique per call. */
+export function messageId(): string {
+  const h = uuid4Hex();
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+}
+
+function uuid4Hex(): string {
   const bytes = new Uint8Array(16);
   const c = (globalThis as { crypto?: { getRandomValues?: (a: Uint8Array) => Uint8Array } }).crypto;
   if (c?.getRandomValues) c.getRandomValues(bytes);
@@ -372,7 +433,7 @@ export function anonymousId(): string {
   bytes[8] = (bytes[8]! & 0x3f) | 0x80;
   let hex = "";
   for (const b of bytes) hex += b.toString(16).padStart(2, "0");
-  return `anon_${hex}`;
+  return hex;
 }
 
 function parseJSON(text: string): unknown {

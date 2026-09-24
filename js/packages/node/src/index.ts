@@ -1,5 +1,5 @@
 import { arch, hostname, platform, release, type as osType } from "node:os";
-import { IForeventsAPIIntegration, Iforevents, type IForeventsAPIConfig, type IforeventsOptions, type Integration, type Properties } from "@iforevents/core";
+import { IForeventsAPIIntegration, Iforevents, type EventContext, type IForeventsAPIConfig, type IforeventsOptions, type Integration, type Properties } from "@iforevents/core";
 
 export * from "@iforevents/core";
 
@@ -21,6 +21,22 @@ export function nodeContext(extra: Properties = {}): Properties {
     os: platform(),
     ...extra,
   };
+}
+
+/** The request context of schema 2 (sdks/CONTRACT.md section 3.1): library, OS, device type, locale, time zone and the app npm runs. */
+export function nodeEventContext(): EventContext {
+  const context: EventContext = { library: { name: SDK_NAME, version: SDK_VERSION }, os: { name: platform(), version: release() }, device: { type: "server" } };
+  try {
+    const { locale, timeZone } = Intl.DateTimeFormat().resolvedOptions();
+    if (locale) context.locale = locale;
+    if (timeZone) context.timezone = timeZone;
+  } catch {
+    /* Intl without time zone data */
+  }
+  const name = process.env.npm_package_name;
+  const version = process.env.npm_package_version;
+  if (name || version) context.app = { ...(name ? { name } : {}), ...(version ? { version } : {}) };
+  return context;
 }
 
 export interface NodeIforeventsOptions extends Omit<IForeventsAPIConfig, "userAgent" | "storage"> {
@@ -53,6 +69,7 @@ export async function createIforevents(options: NodeIforeventsOptions): Promise<
   const api = disableApi
     ? null
     : new IForeventsAPIIntegration({
+        eventContext: nodeEventContext,
         ...apiConfig,
         userAgent: `iforevents-node/${SDK_VERSION} node/${process.versions.node} (${platform()}; ${arch()})`,
       });

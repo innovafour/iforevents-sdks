@@ -1,4 +1,4 @@
-import type { Properties } from "./types";
+import type { EventContext, Properties } from "./types";
 
 export const SDK_NAME = "@iforevents/core";
 export const SDK_VERSION = "0.1.0";
@@ -16,3 +16,23 @@ export function detectRuntime(): string {
 
 /** Default context: sdk name/version and runtime. Platform packages extend it. */
 export const defaultContext = (): Properties => ({ sdk_name: SDK_NAME, sdk_version: SDK_VERSION, runtime: detectRuntime() });
+
+/** Default request context: the library alone. Platform packages add the device, OS and locale. */
+export const defaultEventContext = (): EventContext => ({ library: { name: SDK_NAME, version: SDK_VERSION } });
+
+/** The campaign of a page from its `utm_*` query parameters; undefined when it has none. */
+export function campaignFromSearch(search: string): EventContext["campaign"] {
+  let params: URLSearchParams;
+  try {
+    params = new URLSearchParams(search);
+  } catch {
+    return undefined;
+  }
+  const campaign: NonNullable<EventContext["campaign"]> = {};
+  const fields = { utm_source: "source", utm_medium: "medium", utm_campaign: "name", utm_term: "term", utm_content: "content" } as const;
+  for (const [param, field] of Object.entries(fields)) {
+    const value = params.get(param);
+    if (value) campaign[field] = value;
+  }
+  return Object.keys(campaign).length > 0 ? campaign : undefined;
+}
