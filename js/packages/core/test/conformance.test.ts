@@ -35,6 +35,14 @@ function make(overrides: Partial<ConstructorParameters<typeof IForeventsAPIInteg
   return integration;
 }
 
+const UUID4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+
+/** A request body without the fields every request adds (item 17-20). */
+function withoutEnvelope(body: Record<string, unknown> | undefined): Record<string, unknown> {
+  const { message_id: _m, anonymous_id: _a, sent_at: _s, context: _c, ...rest } = body ?? {};
+  return rest;
+}
+
 async function boot(overrides: Partial<ConstructorParameters<typeof IForeventsAPIIntegration>[0]> = {}, extra: Integration[] = []) {
   const integration = make(overrides);
   const iforevents = new Iforevents({ integrations: [integration, ...extra], context: () => ({ device_platform: "test", sdk_name: "@iforevents/core" }) });
@@ -50,7 +58,7 @@ describe("IForeventsAPIIntegration conformance", () => {
     expect(req?.method).toBe("POST");
     expect(req?.headers["x-project-key"]).toBe("pk_test");
     expect(req?.headers["content-type"]).toBe("application/json");
-    expect(req?.body).toEqual({
+    expect(withoutEnvelope(req?.body)).toEqual({
       custom_id: "user_1",
       email: "ada@example.com",
       name: "Ada",
@@ -68,7 +76,7 @@ describe("IForeventsAPIIntegration conformance", () => {
     await iforevents.track("clicked", { button: "buy" });
     const [req] = api.byPath("/v1/events/track");
     expect(req?.headers["x-user-id"]).toBe("user_1");
-    expect(req?.body).toEqual({ event_name: "clicked", event_type: "track", properties: { button: "buy" } });
+    expect(withoutEnvelope(req?.body)).toEqual({ event_name: "clicked", event_type: "track", properties: { button: "buy" } });
   });
 
   it("3. batchSize N sends nothing for N-1 events and one /batch with N events on the Nth", async () => {
@@ -110,7 +118,7 @@ describe("IForeventsAPIIntegration conformance", () => {
     const { iforevents } = await boot({ batchSize: 1 });
     await iforevents.page("/pricing", { title: "Pricing" }, { navigationType: "push", previousRoute: "/" });
     const [req] = api.byPath("/v1/events/track");
-    expect(req?.body).toEqual({ event_name: "/pricing", event_type: "page_view", properties: { title: "Pricing", navigation_type: "push", previous_route: "/" } });
+    expect(withoutEnvelope(req?.body)).toEqual({ event_name: "/pricing", event_type: "page_view", properties: { title: "Pricing", navigation_type: "push", previous_route: "/" } });
   });
 
   it("7. before identify every request carries a generated, persisted anon_ id that a new instance reuses", async () => {
@@ -339,5 +347,93 @@ describe("IForeventsAPIIntegration conformance", () => {
     api.use(null);
     await integration.flush();
     expect(api.byPath("/v1/events/batch").at(-1)?.body.events).toHaveLength(1);
+  });
+
+  it("17. every call carries a unique message_id (UUID v4)", async () => {
+    const { iforevents } = await boot({ batchSize: 2, flushInterval: 10_000 });
+    await iforevents.identify("user_1", { plan: "pro" });
+    await iforevents.track("a");
+    await iforevents.track("b");
+    await sleep(30);
+    const identify = api.byPath("/v1/events/identify")[0]!.body;
+    const events = api.byPath("/v1/events/batch")[0]!.body.events as Array<Record<string, unknown>>;
+    const ids = [identify.message_id, ...events.map((e) => e.message_id)];
+    for (const id of ids) expect(id).toMatch(UUID4);
+    expect(new Set(ids).size).toBe(3);
+  });
+
+  it("18. anonymous_id is the visitor's anon_ id: kept after identify, renewed on reset, reused by a new instance", async () => {
+    const storage = new MemoryStorage();
+    const { iforevents, integration } = await boot({ batchSize: 1, storage });
+    await iforevents.track("before");
+    const anon = integration.currentAnonymousId!;
+    expect(anon).toMatch(ANON);
+    await iforevents.identify("user_1");
+    await iforevents.track("after");
+    const [before, after] = api.byPath("/v1/events/track");
+    expect(before?.headers["x-user-id"]).toBe(anon);
+    expect(before?.body.anonymous_id).toBe(anon);
+    expect(after?.headers["x-user-id"]).toBe("user_1");
+    expect(after?.body.anonymous_id).toBe(anon);
+    expect(api.byPath("/v1/events/identify")[0]?.body.anonymous_id).toBe(anon);
+
+    const again = make({ batchSize: 1, storage });
+    await again.init();
+    expect(again.currentAnonymousId).toBe(anon);
+    expect(again.currentUserId).toBe("user_1");
+
+    await iforevents.reset();
+    await iforevents.track("fresh");
+    const fresh = api.byPath("/v1/events/track").at(-1)!;
+    expect(fresh.body.anonymous_id).toMatch(ANON);
+    expect(fresh.body.anonymous_id).not.toBe(anon);
+    expect(fresh.headers["x-user-id"]).toBe(fresh.body.anonymous_id);
+  });
+
+  it("18b. storage written before anonymous_id existed keeps the visitor's anon_ id", async () => {
+    const storage = new MemoryStorage();
+    await storage.set("iforevents_user_id", "anon_0123456789abcdef0123456789abcdef");
+    await storage.set("iforevents_user_identified", "false");
+    const integration = make({ storage });
+    await integration.init();
+    expect(integration.currentAnonymousId).toBe("anon_0123456789abcdef0123456789abcdef");
+    expect(integration.currentUserId).toBe("anon_0123456789abcdef0123456789abcdef");
+  });
+
+  it("19. sent_at is the send time; batched events keep their own created_at", async () => {
+    const { iforevents } = await boot({ batchSize: 2, flushInterval: 10_000 });
+    const start = Date.now();
+    await iforevents.track("a");
+    await sleep(15);
+    await iforevents.track("b");
+    await sleep(30);
+    const body = api.byPath("/v1/events/batch")[0]!.body;
+    const sentAt = Date.parse(body.sent_at as string);
+    const events = body.events as Array<Record<string, unknown>>;
+    expect(sentAt).toBeGreaterThanOrEqual(start);
+    expect(Date.parse(events[0]!.created_at as string)).toBeLessThanOrEqual(sentAt);
+    expect(Date.parse(events[0]!.created_at as string)).toBeLessThan(Date.parse(events[1]!.created_at as string) + 1);
+  });
+
+  it("20. context comes from eventContext on every request; the default names the library; a failing provider sends {}", async () => {
+    const { iforevents } = await boot({ batchSize: 1, eventContext: () => ({ library: { name: "@iforevents/test", version: "9.9.9" }, locale: "es-CO", timezone: "America/Bogota", device: { type: "web" } }) });
+    await iforevents.track("a");
+    await iforevents.identify("user_1");
+    for (const req of api.requests) {
+      expect(req.body.context).toEqual({ library: { name: "@iforevents/test", version: "9.9.9" }, locale: "es-CO", timezone: "America/Bogota", device: { type: "web" } });
+    }
+    api.reset();
+    const plain = await boot({ batchSize: 1 });
+    await plain.iforevents.track("b");
+    expect(api.byPath("/v1/events/track")[0]?.body.context).toEqual({ library: { name: "@iforevents/core", version: expect.any(String) } });
+    api.reset();
+    const failing = await boot({
+      batchSize: 1,
+      eventContext: () => {
+        throw new Error("no device info");
+      },
+    });
+    await failing.iforevents.track("c");
+    expect(api.byPath("/v1/events/track")[0]?.body.context).toEqual({});
   });
 });

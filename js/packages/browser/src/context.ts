@@ -1,4 +1,4 @@
-import type { Properties } from "@iforevents/core";
+import { campaignFromSearch, type EventContext, type Properties } from "@iforevents/core";
 
 export const SDK_NAME = "@iforevents/browser";
 export const SDK_VERSION = "0.1.0";
@@ -53,4 +53,25 @@ export function browserContext(extra: Properties = {}): Properties {
     ...screenInfo,
     ...extra,
   };
+}
+
+/** The request context of schema 2 (sdks/CONTRACT.md section 3.1): library, locale, time zone, OS, device type and the page's campaign. */
+export function browserEventContext(appVersion = ""): EventContext {
+  const context: EventContext = { library: { name: SDK_NAME, version: SDK_VERSION }, device: { type: "web" } };
+  if (typeof navigator === "undefined") return context;
+  const { os, osVersion } = parseUserAgent(navigator.userAgent ?? "");
+  if (os !== "Unknown") context.os = osVersion ? { name: os, version: osVersion } : { name: os };
+  if (navigator.language) context.locale = navigator.language;
+  try {
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (timezone) context.timezone = timezone;
+  } catch {
+    /* older engines */
+  }
+  if (appVersion) context.app = { version: appVersion };
+  if (typeof location !== "undefined") {
+    const campaign = campaignFromSearch(location.search);
+    if (campaign) context.campaign = campaign;
+  }
+  return context;
 }

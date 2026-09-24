@@ -1,4 +1,4 @@
-import { IForeventsAPIIntegration, Iforevents, MemoryStorage, type IForeventsAPIConfig, type Integration, type IntegrationResult, type PageOptions, type Properties, type Storage } from "@iforevents/core";
+import { IForeventsAPIIntegration, Iforevents, MemoryStorage, type EventContext, type IForeventsAPIConfig, type Integration, type IntegrationResult, type PageOptions, type Properties, type Storage } from "@iforevents/core";
 import { AppState, Platform } from "react-native";
 
 export * from "@iforevents/core";
@@ -46,6 +46,32 @@ export async function reactNativeContext(extra: Properties = {}): Promise<Proper
   return { ...base, ...extra };
 }
 
+/** The request context of schema 2 (sdks/CONTRACT.md section 3.1); device, OS and app details come from `react-native-device-info` when installed. */
+export async function reactNativeEventContext(): Promise<EventContext> {
+  const context: EventContext = {
+    library: { name: SDK_NAME, version: SDK_VERSION },
+    device: { type: Platform.OS === "ios" || Platform.OS === "android" ? Platform.OS : "desktop" },
+    os: { name: Platform.OS, version: String(Platform.Version) },
+  };
+  try {
+    const { locale, timeZone } = Intl.DateTimeFormat().resolvedOptions();
+    if (locale) context.locale = locale;
+    if (timeZone) context.timezone = timeZone;
+  } catch {
+    /* Hermes without Intl time zone data */
+  }
+  try {
+    const mod = (await import("react-native-device-info")) as { default?: unknown };
+    const info = (mod.default ?? mod) as { getBrand(): string; getModel(): string; getSystemVersion(): string; getVersion(): string; getBuildNumber(): string; getApplicationName(): string };
+    context.device = { ...context.device, manufacturer: info.getBrand(), model: info.getModel() };
+    context.os = { name: Platform.OS, version: info.getSystemVersion() };
+    context.app = { name: info.getApplicationName(), version: info.getVersion(), build: info.getBuildNumber() };
+  } catch {
+    /* optional peer missing */
+  }
+  return context;
+}
+
 export interface ReactNativeIforeventsOptions extends Omit<IForeventsAPIConfig, "projectKey" | "userAgent" | "storage"> {
   integrations?: Integration[];
   /** Extra context merged into identify traits. */
@@ -84,7 +110,7 @@ export function createReactNativeIforevents(projectKey: string, options: ReactNa
 
   const ready = (async () => {
     if (!disableApi) {
-      api = new IForeventsAPIIntegration({ persistQueue: true, ...apiConfig, projectKey, storage: storage ?? (await pickStorage()) });
+      api = new IForeventsAPIIntegration({ persistQueue: true, eventContext: reactNativeEventContext, ...apiConfig, projectKey, storage: storage ?? (await pickStorage()) });
       iforevents.addIntegration(api);
       // The api integration goes last so adapters registered first keep their order.
     }

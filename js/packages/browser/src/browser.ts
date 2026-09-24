@@ -10,7 +10,7 @@ import {
   type Properties,
   type Storage,
 } from "@iforevents/core";
-import { SDK_VERSION, browserContext } from "./context";
+import { SDK_VERSION, browserContext, browserEventContext } from "./context";
 
 export interface BrowserIforeventsOptions extends Omit<IForeventsAPIConfig, "projectKey" | "userAgent" | "fetch"> {
   /** Extra integrations (Mixpanel, GA4, ...) that receive every call. */
@@ -71,7 +71,7 @@ function pageProperties(overrides: Properties): Properties {
 export function createBrowserIforevents(projectKey: string, options: BrowserIforeventsOptions = {}): BrowserIforevents {
   const { integrations = [], autoTrack = false, appVersion = "", context = {}, disableApi = false, onResult, ...apiConfig } = options;
   const storage = apiConfig.storage ?? pickStorage();
-  const api = disableApi ? null : new IForeventsAPIIntegration({ persistQueue: true, ...apiConfig, projectKey, storage });
+  const api = disableApi ? null : new IForeventsAPIIntegration({ persistQueue: true, eventContext: () => browserEventContext(appVersion), ...apiConfig, projectKey, storage });
   const iforevents = new Iforevents({
     integrations: api ? [api, ...integrations] : integrations,
     context: () => browserContext({ device_app_version: appVersion, ...context }),

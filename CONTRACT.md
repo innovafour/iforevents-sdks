@@ -90,6 +90,46 @@ Rules:
 - Headers: `Content-Type: application/json`, `User-Agent` (or
   `X-SDK: iforevents-<lang>/<version>` where User-Agent is not settable).
 
+### 3.1 Schema 2 fields
+
+IForevents Cloud forwards accepted events to third-party destinations on
+an events bus whose schema 2 (`docs/EVENT-SPEC-V2.md` in iforevents-router)
+carries identity, timing and device fields the vendors need. Every SDK
+sends them on every ingest request, in the body. They are additive: an api
+that predates them ignores unknown fields, and nothing else on the wire
+changes.
+
+| Field | Where | Filled by | What it is |
+|-------|-------|-----------|------------|
+| `message_id` | each `/batch` item; `/track` and `/identify` bodies | SDK, automatically | UUID v4, unique per call, made when the call is queued. Destinations deduplicate retried deliveries on it. |
+| `anonymous_id` | every body | SDK, automatically | The device's `anon_...` id. It is generated with the first anonymous `X-User-Id`, persisted under `iforevents_anonymous_id`, and **kept after identify** (while `X-User-Id` becomes the customId) so a destination can merge the anonymous history into the person; `reset` replaces it with a fresh one. Storage that predates the key keeps an unidentified `iforevents_user_id` as the anonymous id. |
+| `sent_at` | every body | SDK, automatically | RFC 3339 UTC time the request was built, on the device's clock. With each event's `created_at` it lets a destination correct clock skew. |
+| `context` | every body | SDK, automatically; overridable | The device and app, below. Same object for every event of a request. |
+
+`context`, every member optional:
+
+| Member | Browser | Server | Mobile |
+|--------|---------|--------|--------|
+| `library.name`, `library.version` | the SDK package | the SDK package | the SDK package |
+| `locale` (BCP 47) | `navigator.language` | `Intl` locale | platform locale |
+| `timezone` (IANA) | `Intl` time zone | `Intl` time zone | when the platform exposes an IANA name |
+| `campaign.source`, `.medium`, `.name`, `.term`, `.content` | the page's `utm_source`, `utm_medium`, `utm_campaign`, `utm_term`, `utm_content` | none | none |
+| `device.type`, `.manufacturer`, `.model` | `web` | `server` | `ios` / `android` / `desktop`, manufacturer and model |
+| `os.name`, `os.version` | parsed from the user agent | the OS | the OS |
+| `app.name`, `app.version`, `app.build` | `version` from the app's option | from the package manager when it tells | from the app bundle |
+| `network.*` | none | none | none yet |
+
+What the caller passes stays what it was: the event name, its properties,
+identify's customId and traits, and the app version option. An app that
+knows better (a campaign kept since landing, a device id it may share)
+supplies its own context provider (`eventContext` in the JS and Flutter
+SDKs), which replaces the automatic one. SDKs never send a hardware device
+id on their own: it would reach every destination.
+
+Nested property maps are still flattened with `_` (section 1), so the
+properties of an SDK event reach the api flat; a caller who needs nested
+structure at a destination sends it to the ingest API directly.
+
 ## 4. Errors (all bodies are `{"error": <code or message>, "message"?: ...}`)
 
 | Status | `error` | Class | Retry? | Queue |
@@ -170,3 +210,7 @@ back to the front of the queue when `requeueFailedEvents` (default true).
 14. No request body or header ever contains a string named `secret`.
 15. Nested properties are flattened with `_`.
 16. Real-API smoke (`IFOREVENTS_PROJECT_KEY` + `IFOREVENTS_BASE_URL` set): identify 201, batch 202, track 201.
+17. Every call carries a `message_id` (UUID v4), unique per call: each batch item, each single track, each identify.
+18. `anonymous_id` equals the anonymous `X-User-Id` before identify, stays the same after identify while `X-User-Id` becomes the customId, is reused by a new instance on the same storage, and changes on reset.
+19. Every request carries `sent_at`, an RFC 3339 time at or after its events' `created_at`.
+20. Every request carries a `context` with at least `library`; a context provider that fails sends `{}` and never blocks the request.
