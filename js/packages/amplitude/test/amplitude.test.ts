@@ -31,7 +31,7 @@ describe("@iforevents/amplitude", () => {
     expect(calls).toEqual([
       ["setUserId", "u1"],
       ["identify", { plan: "pro" }],
-      ["track", "buy", { plan: "pro", total: 9 }],
+      ["track", "buy", { total: 9 }],
       ["track", "/x", {}],
       ["reset"],
     ]);
@@ -54,7 +54,7 @@ describe("@iforevents/amplitude", () => {
     await ife.shutdown();
     expect(calls[0]).toMatchObject(["track", "anon", {}, { device_id: "srv-1" }]);
     expect(calls[1]).toEqual(["identify", { tier: "gold" }, { user_id: "u2" }]);
-    expect(calls[2]).toMatchObject(["track", "paid", { tier: "gold" }, { user_id: "u2" }]);
+    expect(calls[2]).toMatchObject(["track", "paid", {}, { user_id: "u2" }]);
     expect(calls.at(-1)).toEqual(["flush"]);
   });
 });

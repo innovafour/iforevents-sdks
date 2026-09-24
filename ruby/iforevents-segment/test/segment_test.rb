@@ -32,7 +32,7 @@ class SegmentIntegrationTest < Minitest::Test
     assert_equal [:track, { anonymous_id: "server", event: "anon", properties: {}, timestamp: fake.calls[0][1][:timestamp] }], fake.calls[0]
     assert_equal [:identify, { user_id: "u", traits: { "plan" => "pro" } }], fake.calls[1]
     assert_equal "u", fake.calls[2][1][:user_id]
-    assert_equal({ "plan" => "pro", "amount" => 1 }, fake.calls[2][1][:properties])
+    assert_equal({ "amount" => 1 }, fake.calls[2][1][:properties])
     assert_equal [:page, "Home", "/"], [fake.calls[3][0], fake.calls[3][1][:name], fake.calls[3][1][:properties]["to_route"]]
     assert_equal "server", fake.calls[4][1][:anonymous_id]
     assert_equal [:flush], fake.calls.last

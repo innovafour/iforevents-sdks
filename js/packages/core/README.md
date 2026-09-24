@@ -71,8 +71,8 @@ Official adapters: `@iforevents/mixpanel`, `@iforevents/amplitude`,
 |--------|---------|---------|
 | `projectKey` | required | public write key |
 | `baseUrl` | `https://api.iforevents.com` | api origin (self-hosted: your host) |
-| `batchSize` | `10` | events per request, 1 disables batching, max 500 |
-| `flushInterval` | `5000` | ms a partial batch waits |
+| `batchSize` | `20` | events per request, 1 disables batching, max 500 |
+| `flushInterval` | `10000` | ms a partial batch waits |
 | `timeout` | `10000` | ms per request |
 | `maxRetries` / `retryDelay` | `3` / `1000` | linear backoff; `Retry-After` honored |
 | `requeueFailedEvents` | `true` | keep events after transient failures |

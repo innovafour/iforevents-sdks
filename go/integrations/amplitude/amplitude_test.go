@@ -32,7 +32,7 @@ func TestForwarding(t *testing.T) {
 	c.Page(ctx, "Home", nil, iforevents.PageOptions{})
 	c.Flush(ctx)
 	c.Shutdown(ctx)
-	if len(f.events) != 3 || f.events[0].EventOptions.DeviceID != "srv-1" || f.events[0].EventOptions.UserID != "" || f.events[1].EventOptions.UserID != "u" || f.events[1].EventProperties["amount"] != 1 || f.events[1].EventProperties["tier"] != "gold" || f.events[1].Time == 0 {
+	if len(f.events) != 3 || f.events[0].EventOptions.DeviceID != "srv-1" || f.events[0].EventOptions.UserID != "" || f.events[1].EventOptions.UserID != "u" || f.events[1].EventProperties["amount"] != 1 || f.events[1].EventProperties["tier"] != nil || f.events[1].Time == 0 {
 		t.Fatalf("events: %+v", f.events)
 	}
 	if len(f.identifies) != 1 || f.identifies[0].UserID != "u" {

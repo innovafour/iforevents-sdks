@@ -57,8 +57,8 @@ to send every event immediately.
 | Property | Default | Meaning |
 |----------|---------|---------|
 | `baseUrl` | `https://api.iforevents.com` | api origin (self-hosted: your host) |
-| `batchSize` | `10` | events per request; 1 disables batching; max 500 |
-| `flushInterval` | `5.0` s | age at which a partial batch is sent with the next event |
+| `batchSize` | `20` | events per request; 1 disables batching; max 500 |
+| `flushInterval` | `10.0` s | age at which a partial batch is sent with the next event |
 | `timeout` | `10.0` s | per request |
 | `maxRetries` / `retryDelay` | `3` / `1.0` s | linear backoff, `Retry-After` honored |
 | `requeueFailedEvents` | `true` | keep events after transient failures |

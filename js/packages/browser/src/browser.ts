@@ -55,10 +55,12 @@ function pickStorage(): Storage {
   return new MemoryStorage();
 }
 
+// The api derives the path (page) from the url and keeps the query as part of
+// it, so neither is sent a second time.
 function pageProperties(overrides: Properties): Properties {
   if (typeof window === "undefined") return { ...overrides };
   const loc = window.location;
-  return { page: loc.pathname, url: loc.href, referrer: document.referrer, title: document.title, search: loc.search, ...overrides };
+  return { url: loc.href, referrer: document.referrer, title: document.title, ...overrides };
 }
 
 /**
@@ -96,7 +98,8 @@ export function createBrowserIforevents(projectKey: string, options: BrowserIfor
       const name = typeof nameOrProperties === "string" ? nameOrProperties : undefined;
       const props = typeof nameOrProperties === "string" ? (properties ?? {}) : (nameOrProperties ?? {});
       const merged = pageProperties(props);
-      const opts: PageOptions = { toRoute: String(merged.page ?? ""), ...pageOptions };
+      const path = typeof window !== "undefined" ? window.location.pathname : "";
+      const opts: PageOptions = { toRoute: String(props.page ?? path), ...pageOptions };
       return iforevents.page(name ?? "page_view", merged, opts);
     },
     identify: async (customId, traits) => {

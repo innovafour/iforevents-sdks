@@ -40,7 +40,7 @@ func TestForwarding(t *testing.T) {
 	if len(f.events) != 4 || f.events[0].Properties["distinct_id"] != "server" || f.events[1].Properties["distinct_id"] != "u" || f.events[3].Properties["distinct_id"] != "server" {
 		t.Fatalf("events: %+v", f.events)
 	}
-	if f.events[1].Properties["amount"] != 1 || f.events[1].Properties["plan"] != "pro" || f.events[1].Properties["time"] == nil {
+	if f.events[1].Properties["amount"] != 1 || f.events[1].Properties["plan"] != nil || f.events[1].Properties["time"] == nil {
 		t.Fatalf("paid: %+v", f.events[1].Properties)
 	}
 	if f.events[2].Name != "Home" || f.events[2].Properties["navigation_type"] != "load" {

@@ -15,8 +15,9 @@ T = TypeVar("T", bound=Integration)
 
 
 class Iforevents:
-    """Identify traits are remembered and merged under later track properties;
-    nested dicts are flattened with ``_``. Mirrors the Flutter ``Iforevents``."""
+    """Identify traits go to every integration once, on identify, and are not
+    copied into later events (each backend keeps them on the profile); nested
+    dicts are flattened with ``_``. Mirrors the Flutter ``Iforevents``."""
 
     def __init__(
         self,
@@ -69,7 +70,7 @@ class Iforevents:
     def track(self, name: str, properties: Optional[Properties] = None) -> List[IntegrationResult]:
         if not name or not self._ready("track"):
             return []
-        event = TrackEvent(name=name, properties=flatten({**self._traits, **(properties or {})}))
+        event = TrackEvent(name=name, properties=flatten(properties or {}))
         return self._fan_out(lambda i: i.track(event))
 
     def page(

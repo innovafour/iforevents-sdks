@@ -6,8 +6,9 @@ namespace IForevents;
 
 /**
  * The facade: one init(), then identify/track/page/reset/flush/shutdown fan
- * out to every integration in isolation. Identify traits are remembered and
- * merged under later track properties; nested arrays are flattened with "_".
+ * out to every integration in isolation. Identify traits go to every
+ * integration once, on identify, and are not copied into later events (each
+ * backend keeps them on the profile); nested arrays are flattened with "_".
  * Mirrors the Iforevents class of the Flutter package.
  */
 class Iforevents
@@ -100,7 +101,7 @@ class Iforevents
         if ($name === '' || !$this->ready('track')) {
             return [];
         }
-        $event = new TrackEvent($name, flatten(array_merge($this->traits, $properties)));
+        $event = new TrackEvent($name, flatten($properties));
         return $this->fanOut(static fn (Integration $i) => $i->track($event));
     }
 

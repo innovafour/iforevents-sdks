@@ -15,9 +15,9 @@ export interface IForeventsAPIConfig {
   projectKey: string;
   /** API origin. Default `https://api.iforevents.com`. */
   baseUrl?: string;
-  /** Events to accumulate before sending (1..500). 1 disables batching. Default 10. */
+  /** Events to accumulate before sending (1..500). 1 disables batching. Default 20. */
   batchSize?: number;
-  /** Milliseconds a partial batch waits before it is sent. Default 5000. */
+  /** Milliseconds a partial batch waits before it is sent. Default 10000. */
   flushInterval?: number;
   /** Per-request timeout in milliseconds. Default 10000. */
   timeout?: number;
@@ -99,12 +99,12 @@ export class IForeventsAPIIntegration extends Integration {
     if ("projectSecret" in (config as object)) {
       throw new Error("[iforevents] the project secret never belongs in an SDK; pass the project key only");
     }
-    const batchSize = Math.max(1, Math.min(MAX_BATCH, Math.floor(config.batchSize ?? 10)));
+    const batchSize = Math.max(1, Math.min(MAX_BATCH, Math.floor(config.batchSize ?? 20)));
     this.config = {
       ...config,
       baseUrl: (config.baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, ""),
       batchSize,
-      flushInterval: config.flushInterval ?? 5000,
+      flushInterval: config.flushInterval ?? 10000,
       timeout: config.timeout ?? 10000,
       maxRetries: config.maxRetries ?? 3,
       retryDelay: config.retryDelay ?? 1000,

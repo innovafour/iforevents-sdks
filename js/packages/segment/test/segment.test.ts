@@ -20,7 +20,7 @@ describe("@iforevents/segment", () => {
     await ife.reset();
     expect(calls).toEqual([
       ["identify", "u", { plan: "pro" }],
-      ["track", "t", { plan: "pro", a: 1 }],
+      ["track", "t", { a: 1 }],
       ["page", undefined, "Home", { s: 1 }],
       ["reset"],
     ]);
@@ -44,7 +44,7 @@ describe("@iforevents/segment", () => {
     await ife.shutdown();
     expect(calls[0]).toMatchObject(["track", { anonymousId: "server", event: "anon" }]);
     expect(calls[1]).toEqual(["identify", { userId: "u", traits: { plan: "pro" } }]);
-    expect(calls[2]).toMatchObject(["track", { userId: "u", event: "known", properties: { plan: "pro" } }]);
+    expect(calls[2]).toMatchObject(["track", { userId: "u", event: "known", properties: {} }]);
     expect(calls.at(-1)).toEqual(["closeAndFlush"]);
   });
 });

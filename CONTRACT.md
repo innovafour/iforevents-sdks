@@ -32,8 +32,12 @@ Rules:
 
 - One failing integration never breaks the others or the caller. Each call is
   isolated (`safeExecute`) and produces an `IntegrationResult{name, success, error}`.
-- `identify` traits are remembered and merged under later `track` properties
-  (identify data first, event properties win). `reset` forgets them.
+- `identify` traits (context included) go to every integration once, on
+  `identify`. They are **not** copied into later `track` properties: every
+  backend keeps them on the user's profile (IForevents joins the profile
+  for user-property filters and breakdowns), and copying them made every
+  event carry, and store, the same traits and personal data again. The
+  facade still remembers them (`currentTraits`); `reset` forgets them.
 - Nested property maps are flattened with `_` (`{a:{b:1}}` -> `a_b: 1`) before
   reaching integrations, as Flutter's `flattenMap` does.
 - Context is collected automatically and merged into identify traits with the
@@ -45,6 +49,9 @@ Rules:
 - Page/screen views are `track` events with `event_type = "page_view"` and
   `event_name = "page_view"` (browser) or the screen name (mobile), with
   `navigation_type`, `to_route`, `previous_route` in properties when known.
+  A browser page view sends `url`, `referrer` and `title`; the api derives
+  `page` (the path) from `url` and stores the URL as origin plus query, so
+  sending the path or the query string again costs bytes and nothing else.
 
 ## 2. Credentials
 
@@ -62,6 +69,8 @@ Rules:
 
 - `event_type` / `type` is `"track"` or `"page_view"`. Always send it: the
   server defaults to `"track"` otherwise and page views vanish.
+- Batch by default: one `/batch` request for many events is the cheap path
+  for the device, the network and the api alike (defaults below).
 - `created_at` is RFC 3339 UTC, set when the event was queued, not when sent.
 - `X-User-Id: <id>` is sent on every identify/track/batch request. The SDK
   owns identity: on first run it generates `anon_<uuid4 without dashes>`,
@@ -69,8 +78,10 @@ Rules:
   = false) where the platform has storage (localStorage, AsyncStorage,
   prefs/file), and sends it until `identify(customId)` replaces it with
   `customId` (identified = true), set *before* the identify request so
-  attribution holds even if that request fails. The api creates the profile
-  on first sight; `identify` only adds name, e-mail and properties. `reset`
+  attribution holds even if that request fails. A user exists by its
+  events alone (the api keys it by a hash of the id, no profile); `identify`
+  adds a profile with name, e-mail and properties. identify is not an event:
+  it is not stored as one and does not count against the plan. `reset`
   flushes, then switches to a fresh anonymous id. The `user_uuid` the api
   returns is informational and ignored. Any string up to 256 characters.
   Without the header the api files events under a profile derived from the
@@ -99,8 +110,8 @@ back to the front of the queue when `requeueFailedEvents` (default true).
 |------|---------|
 | `projectKey` | required |
 | `baseUrl` | `https://api.iforevents.com` |
-| `batchSize` | 10 (1 disables batching; clamp to 1..500) |
-| `flushInterval` | 5000 ms |
+| `batchSize` | 20 (1 disables batching; clamp to 1..500) |
+| `flushInterval` | 10000 ms |
 | `timeout` | 10000 ms |
 | `maxRetries` | 3 |
 | `retryDelay` | 1000 ms |
@@ -144,7 +155,7 @@ back to the front of the queue when `requeueFailedEvents` (default true).
 ## 8. Conformance checklist (every SDK's test suite proves these)
 
 1. identify sends the lifted fields and `properties`; `X-User-Id` is the customId from that request on.
-2. track after identify carries `X-User-Id: <customId>` and the merged traits.
+2. track after identify carries `X-User-Id: <customId>` and only its own properties, none of the traits.
 3. batchSize N: N-1 tracks send nothing, the Nth sends one `/batch` with N events, each with `type` and `created_at`.
 4. flushInterval elapses: a partial queue is sent.
 5. batchSize 1: `/track` with `event_type`.

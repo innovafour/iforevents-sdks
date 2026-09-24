@@ -34,9 +34,9 @@ type APIConfig struct {
 	ProjectKey string
 	// BaseURL of the api. Default https://api.iforevents.com.
 	BaseURL string
-	// BatchSize is the number of events per request (1..500). 1 disables batching. Default 10.
+	// BatchSize is the number of events per request (1..500). 1 disables batching. Default 20.
 	BatchSize int
-	// FlushInterval is how long a partial batch waits. Default 5s.
+	// FlushInterval is how long a partial batch waits. Default 10s.
 	FlushInterval time.Duration
 	// Timeout per request. Default 10s.
 	Timeout time.Duration
@@ -102,13 +102,13 @@ func NewAPIIntegration(cfg APIConfig) (*APIIntegration, error) {
 	}
 	cfg.BaseURL = strings.TrimRight(cfg.BaseURL, "/")
 	if cfg.BatchSize <= 0 {
-		cfg.BatchSize = 10
+		cfg.BatchSize = 20
 	}
 	if cfg.BatchSize > maxBatch {
 		cfg.BatchSize = maxBatch
 	}
 	if cfg.FlushInterval == 0 {
-		cfg.FlushInterval = 5 * time.Second
+		cfg.FlushInterval = 10 * time.Second
 	}
 	if cfg.Timeout == 0 {
 		cfg.Timeout = 10 * time.Second

@@ -55,13 +55,13 @@ def test_01_identify_lifts_fields_sends_properties_switches_user_id(api):
     ife.shutdown()
 
 
-def test_02_track_after_identify_carries_uuid_and_traits(api):
+def test_02_track_after_identify_carries_id_and_only_its_own_properties(api):
     ife, _ = boot(api, batch_size=1)
     ife.identify("user_1", {"plan": "pro"})
-    ife.track("clicked", {"button": "buy", "plan": "override"})
+    ife.track("clicked", {"button": "buy"})
     req = api.by_path("/v1/events/track")[0]
     assert req["headers"]["x-user-id"] == "user_1"
-    assert req["body"] == {"event_name": "clicked", "event_type": "track", "properties": {"plan": "override", "button": "buy", "device_platform": "test", "sdk_name": "iforevents-python"}}
+    assert req["body"] == {"event_name": "clicked", "event_type": "track", "properties": {"button": "buy"}}
     ife.shutdown()
 
 

@@ -79,17 +79,17 @@ func TestConformance(t *testing.T) {
 		}
 	})
 
-	t.Run("02 track after identify carries X-User-Id and merged traits", func(t *testing.T) {
+	t.Run("02 track after identify carries X-User-Id and only its own properties", func(t *testing.T) {
 		srv.Reset()
 		c, _ := boot(t, srv, func(c *iforevents.APIConfig) { c.BatchSize = 1 })
 		c.Identify(ctx, "user_1", iforevents.Properties{"plan": "pro"})
-		c.Track(ctx, "clicked", iforevents.Properties{"button": "buy", "plan": "override"})
+		c.Track(ctx, "clicked", iforevents.Properties{"button": "buy"})
 		req := srv.ByPath("/v1/events/track")[0]
 		if req.Headers.Get("X-User-Id") != "user_1" {
 			t.Fatalf("user id header: %v", req.Headers)
 		}
 		props := req.Body["properties"].(map[string]any)
-		if req.Body["event_name"] != "clicked" || req.Body["event_type"] != "track" || props["plan"] != "override" || props["button"] != "buy" || props["device_platform"] != "test" {
+		if req.Body["event_name"] != "clicked" || req.Body["event_type"] != "track" || len(props) != 1 || props["button"] != "buy" {
 			t.Fatalf("body: %v", req.Body)
 		}
 	})

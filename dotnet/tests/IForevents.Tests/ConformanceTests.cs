@@ -65,19 +65,18 @@ public sealed class ConformanceTests : IDisposable
     }
 
     [Fact]
-    public async Task T02_TrackAfterIdentifyCarriesUserIdAndTraits()
+    public async Task T02_TrackAfterIdentifyCarriesUserIdAndOnlyItsOwnProperties()
     {
         var (client, _) = await Boot(c => c.BatchSize = 1);
         await client.IdentifyAsync("user_1", P(("plan", "pro")));
-        await client.TrackAsync("clicked", P(("button", "buy"), ("plan", "override")));
+        await client.TrackAsync("clicked", P(("button", "buy")));
         var req = _api.ByPath("/v1/events/track")[0];
         Assert.Equal("user_1", req.Header("X-User-Id"));
         Assert.Equal("clicked", req.Body.GetProperty("event_name").GetString());
         Assert.Equal("track", req.Body.GetProperty("event_type").GetString());
         var props = req.Body.GetProperty("properties");
-        Assert.Equal("override", props.GetProperty("plan").GetString());
+        Assert.Equal(1, props.EnumerateObject().Count());
         Assert.Equal("buy", props.GetProperty("button").GetString());
-        Assert.Equal("test", props.GetProperty("device_platform").GetString());
     }
 
     [Fact]

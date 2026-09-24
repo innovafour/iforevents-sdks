@@ -9,9 +9,9 @@ public struct APIConfig {
     public var projectKey: String
     public var baseUrl: String = "https://api.iforevents.com"
     /// Events per request (1...500); 1 disables batching.
-    public var batchSize: Int = 10
+    public var batchSize: Int = 20
     /// Seconds a partial batch waits.
-    public var flushInterval: TimeInterval = 5
+    public var flushInterval: TimeInterval = 10
     public var timeout: TimeInterval = 10
     public var maxRetries: Int = 3
     public var retryDelay: TimeInterval = 1

@@ -28,7 +28,10 @@ describe("@iforevents/react-native", () => {
     await sleep(60);
     const [batch] = api.byPath("/v1/events/batch");
     expect(batch?.headers["x-user-id"]).toBe("rn_user");
-    expect((batch?.body.events as Array<{ name: string; properties: Record<string, unknown> }>)[0]).toMatchObject({ name: "opened", properties: { plan: "pro", device_platform: "ios" } });
+    // The traits and the device context went once, with identify; the
+    // event carries only its own properties.
+    expect((batch?.body.events as Array<{ name: string; properties: Record<string, unknown> }>)[0]).toMatchObject({ name: "opened", properties: {} });
+    expect(api.byPath("/v1/events/identify")[0]?.body.properties).toMatchObject({ plan: "pro", device_platform: "ios" });
     await client.shutdown();
   });
 

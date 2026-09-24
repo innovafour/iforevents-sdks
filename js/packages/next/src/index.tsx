@@ -21,7 +21,7 @@ function PageViews() {
     if (!pathname) return;
     const toRoute = search ? `${pathname}?${search}` : pathname;
     if (previous.current === toRoute) return;
-    void client.page(pathname, { search }, { navigationType: previous.current === undefined ? "load" : "route", previousRoute: previous.current, toRoute });
+    void client.page(pathname, {}, { navigationType: previous.current === undefined ? "load" : "route", previousRoute: previous.current, toRoute });
     previous.current = toRoute;
   }, [client, pathname, search]);
   return null;

@@ -69,8 +69,8 @@ func (c *Console) Track(ctx context.Context, e iforevents.TrackEvent) error {
 |-------|---------|---------|
 | `ProjectKey` | required | public write key |
 | `BaseURL` | `https://api.iforevents.com` | api origin (self-hosted: your host) |
-| `BatchSize` | `10` | events per request; 1 disables batching; max 500 |
-| `FlushInterval` | `5s` | how long a partial batch waits |
+| `BatchSize` | `20` | events per request; 1 disables batching; max 500 |
+| `FlushInterval` | `10s` | how long a partial batch waits |
 | `Timeout` | `10s` | per request |
 | `MaxRetries` / `RetryDelay` | `3` / `1s` | linear backoff, `Retry-After` honored; `MaxRetries: -1` disables |
 | `DisableRequeue` | `false` | drop events after transient failures |

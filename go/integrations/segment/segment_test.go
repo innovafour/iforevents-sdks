@@ -37,7 +37,7 @@ func TestForwarding(t *testing.T) {
 	if m := f.msgs[1].(analytics.Identify); m.UserId != "u" || m.Traits["plan"] != "pro" {
 		t.Fatalf("identify: %+v", m)
 	}
-	if m := f.msgs[2].(analytics.Track); m.UserId != "u" || m.Properties["amount"] != 1 || m.Properties["plan"] != "pro" || m.Timestamp.IsZero() {
+	if m := f.msgs[2].(analytics.Track); m.UserId != "u" || m.Properties["amount"] != 1 || m.Properties["plan"] != nil || m.Timestamp.IsZero() {
 		t.Fatalf("paid: %+v", m)
 	}
 	if m := f.msgs[3].(analytics.Page); m.Name != "Home" || m.Properties["to_route"] != "/" {

@@ -58,7 +58,7 @@ class SegmentIntegrationTest {
         TrackMessage paid = (TrackMessage) msgs.get(2);
         assertEquals("u", paid.userId());
         assertEquals(1, paid.properties().get("amount"));
-        assertEquals("pro", paid.properties().get("plan"));
+        assertNull(paid.properties().get("plan"));
         PageMessage page = (PageMessage) msgs.get(3);
         assertEquals("Home", page.name());
         assertEquals("/", page.properties().get("to_route"));

@@ -22,7 +22,7 @@ module Iforevents
 
     attr_reader :project_key, :base_url, :batch_size, :flush_interval, :timeout, :max_retries, :retry_delay, :storage
 
-    def initialize(project_key:, base_url: DEFAULT_BASE_URL, batch_size: 10, flush_interval: 5.0, timeout: 10.0, max_retries: 3, retry_delay: 1.0,
+    def initialize(project_key:, base_url: DEFAULT_BASE_URL, batch_size: 20, flush_interval: 10.0, timeout: 10.0, max_retries: 3, retry_delay: 1.0,
                    requeue_failed_events: true, debug: false, throw_on_error: false, on_quota_exceeded: nil, on_error: nil, storage: nil,
                    persist_queue: false, max_queue_size: 1000, user_agent: nil, flush_at_exit: true, logger: nil, **hooks)
       raise ArgumentError, "the project secret never belongs in an SDK; pass the project key only" if hooks.key?(:project_secret)

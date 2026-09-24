@@ -79,8 +79,8 @@ class ConsoleIntegration extends BaseIntegration {
 | Builder method | Default | Meaning |
 |----------------|---------|---------|
 | `baseUrl` | `https://api.iforevents.com` | api origin (self-hosted: your host) |
-| `batchSize` | `10` | events per request; 1 disables batching; max 500 |
-| `flushIntervalMillis` | `5000` | how long a partial batch waits |
+| `batchSize` | `20` | events per request; 1 disables batching; max 500 |
+| `flushIntervalMillis` | `10000` | how long a partial batch waits |
 | `timeoutMillis` | `10000` | per request |
 | `maxRetries` / `retryDelayMillis` | `3` / `1000` | linear backoff, `Retry-After` honored |
 | `requeueFailedEvents` | `true` | keep events after transient failures |

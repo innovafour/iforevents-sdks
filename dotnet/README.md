@@ -46,8 +46,8 @@ identify only adds traits. `ResetAsync` switches to a fresh anonymous id.
 | Property | Default | Meaning |
 |----------|---------|---------|
 | `BaseUrl` | `https://api.iforevents.com` | api origin (self-hosted: your host) |
-| `BatchSize` | `10` | events per request; 1 disables batching; max 500 |
-| `FlushInterval` | `5s` | how long a partial batch waits |
+| `BatchSize` | `20` | events per request; 1 disables batching; max 500 |
+| `FlushInterval` | `10s` | how long a partial batch waits |
 | `Timeout` | `10s` | per request |
 | `MaxRetries` / `RetryDelay` | `3` / `1s` | linear backoff, `Retry-After` honored |
 | `RequeueFailedEvents` | `true` | keep events after transient failures |

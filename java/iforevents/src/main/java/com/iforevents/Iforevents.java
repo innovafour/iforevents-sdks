@@ -12,8 +12,9 @@ import java.util.logging.Logger;
 /**
  * The facade: one {@link #init()}, then {@link #identify}, {@link #track},
  * {@link #page}, {@link #reset}, {@link #flush} and {@link #shutdown} fan out
- * to every integration in isolation. Identify traits are remembered and
- * merged under later track properties; nested maps are flattened with
+ * to every integration in isolation. Identify traits go to every
+ * integration once, on identify, and are not copied into later events (each
+ * backend keeps them on the profile); nested maps are flattened with
  * {@code _}. Mirrors the {@code Iforevents} class of the Flutter package.
  */
 public class Iforevents {
@@ -103,9 +104,9 @@ public class Iforevents {
 
     public List<IntegrationResult> track(String name, Map<String, ?> properties) {
         if (name == null || name.isEmpty() || !ready("track")) return Collections.emptyList();
-        Map<String, Object> merged = new LinkedHashMap<String, Object>(traits);
-        if (properties != null) merged.putAll(properties);
-        final TrackEvent event = new TrackEvent(name, Flatten.flatten(merged));
+        Map<String, Object> own = new LinkedHashMap<String, Object>();
+        if (properties != null) own.putAll(properties);
+        final TrackEvent event = new TrackEvent(name, Flatten.flatten(own));
         return fanOut(new Action() {
             @Override
             public void run(Integration i) throws Exception { i.track(event); }

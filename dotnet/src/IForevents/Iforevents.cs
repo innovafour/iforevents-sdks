@@ -8,8 +8,9 @@ namespace IForevents
 {
     /// <summary>
     /// The facade: one InitAsync, then Identify/Track/Page/Reset/Flush/Shutdown fan out to every
-    /// integration in isolation. Identify traits are remembered and merged under later track
-    /// properties; nested dictionaries are flattened with "_". Mirrors the Flutter Iforevents class.
+    /// integration in isolation. Identify traits go to every integration once, on identify, and
+    /// are not copied into later events (each backend keeps them on the profile); nested
+    /// dictionaries are flattened with "_". Mirrors the Flutter Iforevents class.
     /// </summary>
     public sealed class Iforevents : IDisposable
     {
@@ -83,10 +84,9 @@ namespace IForevents
         public Task<IReadOnlyList<IntegrationResult>> TrackAsync(string name, IReadOnlyDictionary<string, object?>? properties = null, CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrEmpty(name) || !Ready("Track")) return Task.FromResult<IReadOnlyList<IntegrationResult>>(Array.Empty<IntegrationResult>());
-            Dictionary<string, object?> merged;
-            lock (_lock) merged = _traits.ToDictionary(p => p.Key, p => p.Value);
-            if (properties != null) foreach (var p in properties) merged[p.Key] = p.Value;
-            var evt = new TrackEvent(name, Flattener.Flatten(merged));
+            var own = new Dictionary<string, object?>();
+            if (properties != null) foreach (var p in properties) own[p.Key] = p.Value;
+            var evt = new TrackEvent(name, Flattener.Flatten(own));
             return FanOutAsync(i => i.TrackAsync(evt, cancellationToken));
         }
 

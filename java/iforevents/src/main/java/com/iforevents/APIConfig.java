@@ -59,8 +59,8 @@ public final class APIConfig {
     public static final class Builder {
         private final String projectKey;
         private String baseUrl = "https://api.iforevents.com";
-        private int batchSize = 10;
-        private long flushIntervalMillis = 5000;
+        private int batchSize = 20;
+        private long flushIntervalMillis = 10000;
         private int timeoutMillis = 10000;
         private int maxRetries = 3;
         private long retryDelayMillis = 1000;
