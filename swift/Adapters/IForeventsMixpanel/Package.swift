@@ -8,12 +8,13 @@ let package = Package(
     platforms: [.iOS(.v13), .macOS(.v10_15), .tvOS(.v13), .watchOS(.v7)],
     products: [.library(name: "IForeventsMixpanel", targets: ["IForeventsMixpanel"])],
     dependencies: [
+        // The core at swift/. SwiftPM names a path dependency after its directory.
         .package(path: "../.."),
         .package(url: "https://github.com/mixpanel/mixpanel-swift.git", from: "6.7.0"),
     ],
     targets: [
         .target(name: "IForeventsMixpanel", dependencies: [
-            .product(name: "IForevents", package: "iforevents-swift"),
+            .product(name: "IForevents", package: "swift"),
             .product(name: "Mixpanel", package: "mixpanel-swift"),
         ]),
         .testTarget(name: "IForeventsMixpanelTests", dependencies: ["IForeventsMixpanel"]),
