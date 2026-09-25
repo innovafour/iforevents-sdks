@@ -8,12 +8,13 @@ let package = Package(
     platforms: [.iOS(.v13), .macOS(.v10_15), .tvOS(.v13)],
     products: [.library(name: "IForeventsFirebase", targets: ["IForeventsFirebase"])],
     dependencies: [
+        // The core at swift/. SwiftPM names a path dependency after its directory.
         .package(path: "../.."),
         .package(url: "https://github.com/firebase/firebase-ios-sdk.git", from: "11.0.0"),
     ],
     targets: [
         .target(name: "IForeventsFirebase", dependencies: [
-            .product(name: "IForevents", package: "iforevents-swift"),
+            .product(name: "IForevents", package: "swift"),
             .product(name: "FirebaseAnalytics", package: "firebase-ios-sdk"),
         ]),
     ],
