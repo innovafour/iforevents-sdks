@@ -32,8 +32,11 @@ session. If a key is abused, rotate it from the dashboard.
 
 ## Releases
 
-Each SDK is versioned and released on its own. Push a tag and the matching
-workflow in `.github/workflows/publish-<sdk>.yml` tests and publishes it:
+Each SDK is versioned and released manually by its maintainer. GitHub Actions
+and the Mac mini deployment pipelines are disabled for this repository.
+Pushing a tag does not run a publishing or runner-validation workflow.
+Run the SDK's local checks and publish the package manually to its registry;
+retain these version-tag conventions:
 
 | SDK | Tag |
 |-----|-----|
