@@ -84,5 +84,7 @@ jobs:
         run: bash "$GITHUB_WORKSPACE/.github/scripts/setup-maven.sh"
       - run: mvn -q -ntp -pl iforevents -am install -DskipTests
         working-directory: java
-      - run: gradle --no-daemon --max-workers=2 test assemble --no-configuration-cache
+      - run: gradle --no-daemon --max-workers=2 assemble --no-configuration-cache
+        working-directory: android
+      - run: gradle --no-daemon --max-workers=2 test --no-configuration-cache
         working-directory: android
