@@ -40,14 +40,12 @@ jobs:
       env:
         GH_TOKEN: ${{ github.token }}
         FALLBACK_RUNNER: '["ubuntu-latest"]'
-        LOCAL_RUNNER_KIND: deploy
+        LOCAL_RUNNER_KIND: macos-public
         RUNNER_REQUEST_KEY: .github/workflows/publish-android.yml:publish
         FORCE_GITHUB: ${{ vars.FORCE_GITHUB_RUNNERS || 'false' }}
       run: python3 .github/scripts/select-runner.py
 
   publish:
-    env:
-      DOCKER_DEFAULT_PLATFORM: linux/amd64
     needs: [runner_publish]
     runs-on: ${{ github.run_attempt > 1 && fromJSON('["ubuntu-latest"]') || fromJSON(needs.runner_publish.outputs.runner || '["ubuntu-latest"]') }}
     steps:
@@ -63,6 +61,8 @@ jobs:
       - uses: gradle/actions/setup-gradle@cc4fc85e6b35bafd578d5ffbc76a5518407e1af0 # v4.2.1
         with:
           gradle-version: '8.11.1'
+      - name: Set up Maven
+        run: bash "$GITHUB_WORKSPACE/.github/scripts/setup-maven.sh"
       # The Android SDK builds on the JVM core from ../java.
       - run: mvn -q -ntp -pl iforevents -am install -DskipTests
         working-directory: java
