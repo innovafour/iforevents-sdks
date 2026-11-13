@@ -1,0 +1,47 @@
+name: Validate Mac mini SDK runner
+on:
+  push:
+    branches: [ci/mac-primary-github-fallback]
+  workflow_dispatch:
+permissions:
+  contents: read
+  statuses: write
+  actions: read
+jobs:
+  choose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      runner: ${{ steps.choose.outputs.runner }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - id: choose
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FALLBACK_RUNNER: '["macos-15"]'
+          LOCAL_RUNNER_KIND: macos-public
+          RUNNER_REQUEST_KEY: .github/workflows/runner-fallback-validation.yml:swift
+        run: python3 .github/scripts/select-runner.py
+  swift:
+    needs: choose
+    runs-on: ${{ fromJSON(needs.choose.outputs.runner) }}
+    timeout-minutes: 20
+    steps:
+      - name: Verify SDK account isolation
+        run: |
+          set -euo pipefail
+          test "$RUNNER_ENVIRONMENT" = self-hosted
+          test "$(id -un)" = buildrunner
+          if sudo -n true 2>/dev/null; then exit 1; fi
+          for path in /opt/home-server/ihabitar/secrets /opt/home-server/ihabitar/release /Users/runner/.appstoreconnect; do
+            if test -r "$path"; then echo 'Unexpected signing access'; exit 1; fi
+          done
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - run: swift test
+        working-directory: swift
+      - run: xcodebuild build -scheme IForevents -destination 'generic/platform=iOS' -skipPackagePluginValidation | tail -3
+        working-directory: swift

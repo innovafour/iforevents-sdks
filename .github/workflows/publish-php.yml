@@ -15,11 +15,43 @@ defaults:
     working-directory: php
 
 permissions:
+  actions: read
+  statuses: write
   contents: read
 
 jobs:
-  verify:
+  runner_verify:
+    name: Reserve Mac mini for verify
     runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}
+    permissions:
+      contents: read
+      actions: read
+      statuses: write
+    outputs:
+      runner: ${{ steps.choose.outputs.runner }}
+    steps:
+    - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      with:
+        persist-credentials: false
+    - name: Choose local runner or GitHub fallback
+      id: choose
+      env:
+        GH_TOKEN: ${{ github.token }}
+        FALLBACK_RUNNER: '["ubuntu-latest"]'
+        LOCAL_RUNNER_KIND: deploy
+        RUNNER_REQUEST_KEY: .github/workflows/publish-php.yml:verify
+        FORCE_GITHUB: ${{ vars.FORCE_GITHUB_RUNNERS || 'false' }}
+      run: python3 .github/scripts/select-runner.py
+
+  verify:
+    env:
+      DOCKER_DEFAULT_PLATFORM: linux/amd64
+    needs: [runner_verify]
+    runs-on: ${{ github.run_attempt > 1 && fromJSON('["ubuntu-latest"]') || fromJSON(needs.runner_verify.outputs.runner || '["ubuntu-latest"]') }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2.37.2
