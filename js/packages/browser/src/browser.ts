@@ -11,6 +11,7 @@ import {
   type Storage,
 } from "@iforevents/core";
 import { SDK_VERSION, browserContext, browserEventContext } from "./context";
+import { HeatmapRecorder, type HeatmapOptions, type HeatmapPayload } from "./heatmap";
 
 export interface BrowserIforeventsOptions extends Omit<IForeventsAPIConfig, "projectKey" | "userAgent" | "fetch"> {
   /** Extra integrations (Mixpanel, GA4, ...) that receive every call. */
@@ -23,6 +24,13 @@ export interface BrowserIforeventsOptions extends Omit<IForeventsAPIConfig, "pro
   context?: Properties;
   /** Skip the IForevents API integration (adapters only). Default false. */
   disableApi?: boolean;
+  /**
+   * Record heatmaps: clicks, rage and dead clicks, mouse movement,
+   * hesitation, exit intent, copied text, scroll depth and attention per
+   * page (sent aggregated to /v1/events/heatmap). Default true; `false`
+   * turns it off, an object tunes it.
+   */
+  heatmaps?: boolean | HeatmapOptions;
   onResult?: (results: IntegrationResult[]) => void;
 }
 
@@ -32,6 +40,8 @@ export type QueuedCall = [method: string, ...args: unknown[]];
 export interface BrowserIforevents {
   iforevents: Iforevents;
   api: IForeventsAPIIntegration | null;
+  /** The heatmap recorder, or null when heatmaps are off. */
+  heatmaps: HeatmapRecorder | null;
   track(name: string, properties?: Properties): Promise<IntegrationResult[]>;
   /** `page()`, `page(props)` or `page(name, props)`; path, url, referrer and title are added unless overridden. */
   page(nameOrProperties?: string | Properties, properties?: Properties, options?: PageOptions): Promise<IntegrationResult[]>;
@@ -69,7 +79,7 @@ function pageProperties(overrides: Properties): Properties {
  * optional automatic page views on history changes.
  */
 export function createBrowserIforevents(projectKey: string, options: BrowserIforeventsOptions = {}): BrowserIforevents {
-  const { integrations = [], autoTrack = false, appVersion = "", context = {}, disableApi = false, onResult, ...apiConfig } = options;
+  const { integrations = [], autoTrack = false, appVersion = "", context = {}, disableApi = false, heatmaps = true, onResult, ...apiConfig } = options;
   const storage = apiConfig.storage ?? pickStorage();
   const api = disableApi ? null : new IForeventsAPIIntegration({ persistQueue: true, eventContext: () => browserEventContext(appVersion), ...apiConfig, projectKey, storage });
   const iforevents = new Iforevents({
@@ -84,9 +94,11 @@ export function createBrowserIforevents(projectKey: string, options: BrowserIfor
   let lastPath = typeof window !== "undefined" ? window.location.pathname : "";
   // Events fired right after identify must carry its uuid: wait for it.
   let identifying: Promise<unknown> = Promise.resolve();
+  const recorder = api && heatmaps !== false && typeof window !== "undefined" ? new HeatmapRecorder(heatmapSender(api, apiConfig), heatmaps === true ? {} : heatmaps) : null;
   const client: BrowserIforevents = {
     iforevents,
     api,
+    heatmaps: recorder,
     track: async (name, properties) => {
       await ready;
       await identifying;
@@ -118,6 +130,7 @@ export function createBrowserIforevents(projectKey: string, options: BrowserIfor
     },
     shutdown: async () => {
       await ready;
+      await recorder?.stop();
       return iforevents.shutdown();
     },
   };
@@ -132,8 +145,26 @@ export function createBrowserIforevents(projectKey: string, options: BrowserIfor
       if (document.visibilityState === "hidden") beacon();
     });
     if (autoTrack) setupAutoTracking(client, () => lastPath, (p) => (lastPath = p));
+    if (recorder) void ready.then(() => recorder.start());
   }
   return client;
+}
+
+// Heatmap batches go straight to the api with the same key and user id as
+// the events; they are not queued with them (a heatmap is a sample: what
+// fails to send is dropped).
+function heatmapSender(api: IForeventsAPIIntegration, config: Omit<IForeventsAPIConfig, "projectKey">): (payload: HeatmapPayload, keepalive: boolean) => Promise<void> {
+  const fetchImpl = (config.fetch ?? (globalThis as { fetch?: typeof fetch }).fetch)?.bind(globalThis);
+  return async (payload, keepalive) => {
+    if (!fetchImpl) return;
+    const userId = api.currentUserId;
+    const headers: Record<string, string> = { "Content-Type": "application/json", "X-Project-Key": api.config.projectKey };
+    if (userId) headers["X-User-Id"] = userId;
+    const body = JSON.stringify(payload);
+    // keepalive bodies are capped at 64 KB by browsers.
+    const res = await fetchImpl(api.config.baseUrl + "/v1/events/heatmap", { method: "POST", headers, body, keepalive: keepalive && body.length < 60_000, credentials: "omit" });
+    if (!res.ok && config.debug) (config.logger ?? console).warn("[iforevents] heatmap batch answered", res.status);
+  };
 }
 
 function setupAutoTracking(client: BrowserIforevents, getLast: () => string, setLast: (p: string) => void): void {
@@ -157,3 +188,4 @@ function setupAutoTracking(client: BrowserIforevents, getLast: () => string, set
 }
 
 export { SDK_VERSION };
+export { HeatmapRecorder, isHeatmapPreview, selectorOf, HEATMAP_PREVIEW_NAME, type HeatmapOptions, type HeatmapPayload, type HeatmapItem } from "./heatmap";
