@@ -1,4 +1,9 @@
 import {
+  attributionFromURL,
+  nextAttribution,
+  parseAttributionState,
+  withAttribution,
+  type AttributionState,
   IForeventsAPIIntegration,
   Iforevents,
   MemoryStorage,
@@ -23,6 +28,12 @@ export interface BrowserIforeventsOptions extends Omit<IForeventsAPIConfig, "pro
   context?: Properties;
   /** Skip the IForevents API integration (adapters only). Default false. */
   disableApi?: boolean;
+  /**
+   * Attach the visit's attribution (utm_*, ad click ids, referring_domain)
+   * to every event of the session, so any report can split by origin.
+   * Default true.
+   */
+  attribution?: boolean;
   onResult?: (results: IntegrationResult[]) => void;
 }
 
@@ -55,6 +66,42 @@ function pickStorage(): Storage {
   return new MemoryStorage();
 }
 
+const ATTRIBUTION_KEY = "iforevents.attribution";
+
+/**
+ * The session attribution, kept in localStorage (memory when it is not
+ * available) so it survives page loads within the session.
+ */
+function attributionTracker(): (properties: Properties | undefined) => Properties {
+  let memory: AttributionState | null = null;
+  let first = true;
+  const load = (): AttributionState | null => {
+    try {
+      return parseAttributionState(localStorage.getItem(ATTRIBUTION_KEY));
+    } catch {
+      return memory;
+    }
+  };
+  const save = (state: AttributionState | null): void => {
+    memory = state;
+    try {
+      if (state) localStorage.setItem(ATTRIBUTION_KEY, JSON.stringify(state));
+      else localStorage.removeItem(ATTRIBUTION_KEY);
+    } catch {
+      /* storage disabled: memory only */
+    }
+  };
+  return (properties) => {
+    if (typeof window === "undefined") return properties ?? {};
+    // Only the first event of a page load can come from another site.
+    const referrer = first ? document.referrer : "";
+    first = false;
+    const state = nextAttribution(load(), attributionFromURL(window.location.href, referrer), Date.now());
+    save(state);
+    return withAttribution(properties, state);
+  };
+}
+
 // The api derives the path (page) from the url and keeps the query as part of
 // it, so neither is sent a second time.
 function pageProperties(overrides: Properties): Properties {
@@ -69,7 +116,8 @@ function pageProperties(overrides: Properties): Properties {
  * optional automatic page views on history changes.
  */
 export function createBrowserIforevents(projectKey: string, options: BrowserIforeventsOptions = {}): BrowserIforevents {
-  const { integrations = [], autoTrack = false, appVersion = "", context = {}, disableApi = false, onResult, ...apiConfig } = options;
+  const { integrations = [], autoTrack = false, appVersion = "", context = {}, disableApi = false, attribution = true, onResult, ...apiConfig } = options;
+  const attribute = attribution ? attributionTracker() : (p: Properties | undefined) => p ?? {};
   const storage = apiConfig.storage ?? pickStorage();
   const api = disableApi ? null : new IForeventsAPIIntegration({ persistQueue: true, eventContext: () => browserEventContext(appVersion), ...apiConfig, projectKey, storage });
   const iforevents = new Iforevents({
@@ -90,14 +138,14 @@ export function createBrowserIforevents(projectKey: string, options: BrowserIfor
     track: async (name, properties) => {
       await ready;
       await identifying;
-      return iforevents.track(name, properties);
+      return iforevents.track(name, attribute(properties));
     },
     page: async (nameOrProperties, properties, pageOptions = {}) => {
       await ready;
       await identifying;
       const name = typeof nameOrProperties === "string" ? nameOrProperties : undefined;
       const props = typeof nameOrProperties === "string" ? (properties ?? {}) : (nameOrProperties ?? {});
-      const merged = pageProperties(props);
+      const merged = attribute(pageProperties(props));
       const path = typeof window !== "undefined" ? window.location.pathname : "";
       const opts: PageOptions = { toRoute: String(props.page ?? path), ...pageOptions };
       return iforevents.page(name ?? "page_view", merged, opts);
@@ -137,11 +185,16 @@ export function createBrowserIforevents(projectKey: string, options: BrowserIfor
 }
 
 function setupAutoTracking(client: BrowserIforevents, getLast: () => string, setLast: (p: string) => void): void {
+  let previousHref = window.location.href;
   const fire = (navigationType: string): void => {
     const previousRoute = getLast();
     const toRoute = window.location.pathname;
     setLast(toRoute);
-    void client.page(undefined, {}, { navigationType, previousRoute, toRoute });
+    // An in-app navigation was referred by the previous page, not by the
+    // site the visit came from (document.referrer never changes).
+    const props: Properties = navigationType === "load" ? {} : { referrer: previousHref };
+    previousHref = window.location.href;
+    void client.page(props, undefined, { navigationType, previousRoute, toRoute });
   };
   const history = window.history;
   for (const method of ["pushState", "replaceState"] as const) {

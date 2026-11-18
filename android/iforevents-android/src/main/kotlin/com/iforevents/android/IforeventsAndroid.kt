@@ -3,6 +3,7 @@ package com.iforevents.android
 import android.app.Activity
 import android.app.Application
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import com.iforevents.APIConfig
@@ -33,11 +34,20 @@ class IforeventsAndroid private constructor(
     val api: IForeventsAPIIntegration?,
     private val executor: ExecutorService,
 ) {
+    /** The session attribution; only touched on the worker thread. */
+    private val attribution = AttributionTracker()
+
     class Options {
         /** Extra integrations besides the IForevents API (Firebase, Mixpanel, ...). */
         val integrations: MutableList<Integration> = mutableListOf()
         /** Track a screen view for every resumed Activity. Default true. */
         var trackActivities: Boolean = true
+        /**
+         * Record the deep link (Intent data) an Activity is opened with, as
+         * [trackDeepLink] does, and attach the session attribution to every
+         * event. Default true.
+         */
+        var trackDeepLinks: Boolean = true
         /** Flush when the last Activity stops. Default true. */
         var flushOnBackground: Boolean = true
         /** Extra context merged into identify traits. */
@@ -63,12 +73,44 @@ class IforeventsAndroid private constructor(
 
     fun identify(customId: String, traits: Map<String, Any?> = emptyMap()): Future<List<IntegrationResult>> = submit { iforevents.identify(customId, traits) }
 
-    fun track(name: String, properties: Map<String, Any?> = emptyMap()): Future<List<IntegrationResult>> = submit { iforevents.track(name, properties) }
+    fun track(name: String, properties: Map<String, Any?> = emptyMap()): Future<List<IntegrationResult>> = submit { iforevents.track(name, attribution.apply(properties)) }
 
     fun screen(name: String, properties: Map<String, Any?> = emptyMap(), navigationType: String? = null, previousRoute: String? = null): Future<List<IntegrationResult>> =
-        submit { iforevents.page(name, properties, navigationType, name, previousRoute) }
+        submit { iforevents.page(name, attribution.apply(properties), navigationType, name, previousRoute) }
 
-    fun reset(): Future<List<IntegrationResult>> = submit { iforevents.reset() }
+    /**
+     * Records an opened deep link or App Link: sends `deep_link_opened` with
+     * the URL and starts the session attribution from its utm parameters
+     * and click ids (plus the referring app or site), attached to every
+     * event until 30 minutes pass without one. Activities opened with Intent
+     * data are recorded automatically unless [Options.trackDeepLinks] is off.
+     */
+    @JvmOverloads
+    fun trackDeepLink(url: String, referrer: String? = null, properties: Map<String, Any?> = emptyMap()): Future<List<IntegrationResult>> = submit {
+        val landing = Attribution.fromUrl(url, referrer)
+        val props = LinkedHashMap<String, Any?>().apply {
+            put("url", url)
+            if (!referrer.isNullOrEmpty()) put("referrer", referrer)
+            putAll(properties)
+        }
+        iforevents.track("deep_link_opened", attribution.apply(props, landing))
+    }
+
+    /**
+     * Sets the session attribution yourself, e.g. from the Play install
+     * referrer: `setAttribution(Attribution.fromInstallReferrer(details.installReferrer))`.
+     */
+    fun setAttribution(values: Map<String, String>) {
+        submit {
+            attribution.touch(values)
+            emptyList()
+        }
+    }
+
+    fun reset(): Future<List<IntegrationResult>> = submit {
+        attribution.clear()
+        iforevents.reset()
+    }
 
     fun flush(): Future<List<IntegrationResult>> = submit { iforevents.flush() }
 
@@ -84,6 +126,7 @@ class IforeventsAndroid private constructor(
 
     companion object {
         private const val TAG = "IForevents"
+        private const val HANDLED_EXTRA = "com.iforevents.android.deep_link_recorded"
 
         @Volatile
         private var shared: IforeventsAndroid? = null
@@ -123,8 +166,8 @@ class IforeventsAndroid private constructor(
                 val executor = Executors.newSingleThreadExecutor { r -> Thread(r, "iforevents").apply { isDaemon = true } }
                 val created = IforeventsAndroid(facade, api, executor)
                 created.submit { facade.init() }
-                if (app is Application && (options.trackActivities || options.flushOnBackground)) {
-                    app.registerActivityLifecycleCallbacks(Lifecycle(created, options.trackActivities, options.flushOnBackground))
+                if (app is Application && (options.trackActivities || options.flushOnBackground || options.trackDeepLinks)) {
+                    app.registerActivityLifecycleCallbacks(Lifecycle(created, options.trackActivities, options.flushOnBackground, options.trackDeepLinks))
                 }
                 shared = created
                 return created
@@ -137,6 +180,7 @@ class IforeventsAndroid private constructor(
         @JvmOverloads fun identify(customId: String, traits: Map<String, Any?> = emptyMap()) = instance.identify(customId, traits)
         @JvmOverloads fun track(name: String, properties: Map<String, Any?> = emptyMap()) = instance.track(name, properties)
         @JvmOverloads fun screen(name: String, properties: Map<String, Any?> = emptyMap()) = instance.screen(name, properties)
+        @JvmOverloads fun trackDeepLink(url: String, referrer: String? = null) = instance.trackDeepLink(url, referrer)
         fun reset() = instance.reset()
         fun flush() = instance.flush()
 
@@ -149,11 +193,17 @@ class IforeventsAndroid private constructor(
     }
 
     /** Screen views from resumed activities; a flush when the last one stops. */
-    private class Lifecycle(private val sdk: IforeventsAndroid, private val trackActivities: Boolean, private val flushOnBackground: Boolean) : Application.ActivityLifecycleCallbacks {
+    private class Lifecycle(
+        private val sdk: IforeventsAndroid,
+        private val trackActivities: Boolean,
+        private val flushOnBackground: Boolean,
+        private val trackDeepLinks: Boolean,
+    ) : Application.ActivityLifecycleCallbacks {
         private var started = 0
         private var previous: String? = null
 
         override fun onActivityResumed(activity: Activity) {
+            if (trackDeepLinks) recordDeepLink(activity)
             if (!trackActivities) return
             val name = activity.javaClass.simpleName
             sdk.screen(name, emptyMap(), if (previous == null) "load" else "resume", previous)
@@ -167,6 +217,16 @@ class IforeventsAndroid private constructor(
         override fun onActivityStopped(activity: Activity) {
             started--
             if (started <= 0 && flushOnBackground) sdk.flush()
+        }
+
+        /** The Intent's deep link, once per Intent (a marker extra is left on it). */
+        private fun recordDeepLink(activity: Activity) {
+            val intent: Intent = activity.intent ?: return
+            val data = intent.dataString ?: return
+            if (intent.getBooleanExtra(HANDLED_EXTRA, false)) return
+            intent.putExtra(HANDLED_EXTRA, true)
+            val referrer = if (android.os.Build.VERSION.SDK_INT >= 22) activity.referrer?.toString() else null
+            sdk.trackDeepLink(data, referrer)
         }
 
         override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}
