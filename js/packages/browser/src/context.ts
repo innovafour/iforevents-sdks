@@ -1,7 +1,7 @@
 import { campaignFromSearch, type EventContext, type Properties } from "@iforevents/core";
 
 export const SDK_NAME = "@iforevents/browser";
-export const SDK_VERSION = "0.1.0";
+export const SDK_VERSION = "0.2.0";
 
 /** Coarse browser and OS names from the user agent; no fingerprinting. */
 export function parseUserAgent(ua: string): { browser: string; os: string; osVersion: string } {
