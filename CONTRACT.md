@@ -165,6 +165,22 @@ Rules:
   records the Intent data of each opened Activity automatically
   (`trackDeepLinks`, default on).
 
+### 3.3 Heatmaps (UI SDKs only: browser and Flutter)
+
+`POST /v1/events/heatmap` with `X-Project-Key` and `X-User-Id`, answered
+202. A batch belongs to one page view (`page_view_id`, 8 to 64 chars) and
+carries `url`, `page`, `platform`, `viewport {w,h}`, `document {w,h}` and up
+to 2000 `items` of `{k, x, y, v?, n?, s?, tag?, txt?}`. `k` is one of
+`click`, `move`, `scroll`, `rage_click`, `dead_click`, `attention`,
+`exit_intent`, `hesitation`, `copy`; `x` is basis points of the document
+width (0 to 10000), `y` CSS px from the top (for `attention`, the 5% band
+0 to 19). SDKs aggregate on the device, never capture the DOM or field
+values, are on by default with a `sampleRate`, and skip recording inside
+the dashboard preview frame (`window.name == "iforevents-heatmap-preview"`
+or `?__iforevents_preview` in the URL). Heatmap batches are samples: they
+are not queued or retried. Server SDKs do not send them. Full reference:
+the api's docs/HEATMAPS.md.
+
 ## 4. Errors (all bodies are `{"error": <code or message>, "message"?: ...}`)
 
 | Status | `error` | Class | Retry? | Queue |

@@ -25,5 +25,7 @@ export { IforeventsStatic as Iforevents };
   if (script?.dataset.batchSize) opts.batchSize = Number(script.dataset.batchSize);
   if (script?.dataset.flushInterval) opts.flushInterval = Number(script.dataset.flushInterval);
   if (script?.dataset.appVersion) opts.appVersion = script.dataset.appVersion;
+  if (script?.dataset.heatmaps === "false") opts.heatmaps = false;
+  else if (script?.dataset.heatmapsSampleRate) opts.heatmaps = { sampleRate: Number(script.dataset.heatmapsSampleRate) };
   IforeventsStatic.init(key, opts);
 })();

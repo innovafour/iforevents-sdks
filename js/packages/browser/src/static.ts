@@ -8,7 +8,7 @@ import { createBrowserIforevents, type BrowserIforevents, type BrowserIforevents
  * through `window.iforevents.push([...])` are replayed in order.
  */
 export class IforeventsStatic {
-  static readonly version = "0.1.0";
+  static readonly version = "0.2.0";
   private static client: BrowserIforevents | null = null;
 
   static init(projectKey: string, options: BrowserIforeventsOptions = {}): BrowserIforevents {

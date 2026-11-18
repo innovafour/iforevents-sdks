@@ -62,6 +62,8 @@ export class MockApi {
         return json(res, 201, { status: "ok", user_uuid: "22222222-2222-4222-8222-222222222222" });
       case "/v1/events/batch":
         return json(res, 202, { status: "queued", user_uuid: "33333333-3333-4333-8333-333333333333" });
+      case "/v1/events/heatmap":
+        return json(res, 202, { status: "queued" });
       default:
         return json(res, 404, { error: "not found" });
     }
