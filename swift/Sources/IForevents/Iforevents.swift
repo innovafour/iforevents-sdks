@@ -16,6 +16,7 @@ public final class Iforevents {
     private let onResult: Completion?
     private var traits: Properties = [:]
     private var initialized = false
+    private var attribution = AttributionTracker()
 
     public init(integrations: [Integration] = [], context: @escaping () -> Properties = { DeviceContext.collect() }, debug: Bool = false, onResult: Completion? = nil) {
         self.integrations = integrations
@@ -62,7 +63,7 @@ public final class Iforevents {
     public func track(_ name: String, properties: Properties = [:], completion: Completion? = nil) {
         queue.async {
             guard !name.isEmpty, self.ready("track") else { completion?([]); return }
-            let event = TrackEvent(name: name, type: .track, properties: flatten(properties))
+            let event = TrackEvent(name: name, type: .track, properties: flatten(self.attribution.apply(properties)))
             // Compute first: `completion?(expr)` skips `expr` entirely when completion is nil.
             let results = self.fanOut { try $0.track(event) }
             completion?(results)
@@ -72,7 +73,7 @@ public final class Iforevents {
     public func page(_ name: String = "page_view", properties: Properties = [:], navigationType: String? = nil, toRoute: String? = nil, previousRoute: String? = nil, completion: Completion? = nil) {
         queue.async {
             guard self.ready("page") else { completion?([]); return }
-            let event = PageEvent(name: name, properties: flatten(properties), navigationType: navigationType, toRoute: toRoute, previousRoute: previousRoute)
+            let event = PageEvent(name: name, properties: flatten(self.attribution.apply(properties)), navigationType: navigationType, toRoute: toRoute, previousRoute: previousRoute)
             let results = self.fanOut { try $0.page(event) }
             completion?(results)
         }
@@ -83,10 +84,31 @@ public final class Iforevents {
         page(name, properties: properties, navigationType: navigationType, toRoute: name, previousRoute: previousRoute, completion: completion)
     }
 
+    /// Records an opened deep link or universal link (`onOpenURL`,
+    /// `application(_:open:options:)`, `NSUserActivity.webpageURL`): sends
+    /// `deep_link_opened` with the URL and starts the session attribution
+    /// from its utm parameters and click ids, attached to every event until
+    /// 30 minutes pass without one.
+    public func trackDeepLink(_ url: URL, referrer: URL? = nil, properties: Properties = [:], completion: Completion? = nil) {
+        let landing = Attribution.from(url: url, referrer: referrer)
+        queue.async { self.attribution.touch(landing) }
+        var props: Properties = ["url": url.absoluteString]
+        if let referrer = referrer { props["referrer"] = referrer.absoluteString }
+        props.merge(properties) { _, new in new }
+        track("deep_link_opened", properties: props, completion: completion)
+    }
+
+    /// Sets the session attribution yourself (a campaign you resolved, an
+    /// install attribution provider's answer).
+    public func setAttribution(_ values: [String: String]) {
+        queue.async { self.attribution.touch(values) }
+    }
+
     /// Forgets the user in every integration (logout).
     public func reset(completion: Completion? = nil) {
         queue.async {
             guard self.ready("reset") else { completion?([]); return }
+            self.attribution.clear()
             let results = self.fanOut { try $0.reset() }
             self.traits = [:]
             completion?(results)

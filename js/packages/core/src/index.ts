@@ -6,3 +6,15 @@ export { MemoryStorage, WebStorage, type Storage } from "./storage";
 export { flatten, isPlainObject } from "./flatten";
 export { campaignFromSearch, defaultContext, defaultEventContext, detectRuntime, SDK_NAME, SDK_VERSION } from "./context";
 export type { Properties, EventType, IdentifyEvent, TrackEvent, PageEvent, IntegrationResult, Logger, ContextProvider, EventContext, EventContextProvider } from "./types";
+export {
+  ATTRIBUTION_SESSION_MS,
+  CLICK_ID_KEYS,
+  UTM_KEYS,
+  attributionFromQuery,
+  attributionFromURL,
+  hasAttribution,
+  nextAttribution,
+  parseAttributionState,
+  withAttribution,
+  type AttributionState,
+} from "./attribution";

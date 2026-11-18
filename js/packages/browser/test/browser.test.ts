@@ -77,6 +77,42 @@ describe("@iforevents/browser", () => {
     await client.shutdown();
   });
 
+  it("attaches the visit's attribution to every event of the session, and refers in-app navigations to the previous page", async () => {
+    history.pushState({}, "", "/landing?utm_source=newsletter&utm_medium=email&gclid=g1");
+    const client = createBrowserIforevents("pk_test", { baseUrl: api.baseUrl, batchSize: 1, autoTrack: true });
+    await sleep(30);
+    history.pushState({}, "", "/pricing");
+    await sleep(30);
+    await client.track("signup", { utm_source: "own" });
+    await sleep(60);
+    const sent = api.byPath("/v1/events/track").map((r) => r.body.properties as Record<string, unknown>);
+    expect(sent[0]).toMatchObject({ utm_source: "newsletter", utm_medium: "email", gclid: "g1" });
+    expect(sent[1]).toMatchObject({ utm_source: "newsletter", referrer: expect.stringContaining("/landing?utm_source=newsletter") });
+    expect(sent[2]).toMatchObject({ utm_source: "own", utm_medium: "email" });
+    expect(JSON.parse(localStorage.getItem("iforevents.attribution") ?? "{}").props).toMatchObject({ utm_source: "newsletter" });
+    await client.shutdown();
+  });
+
+  it("sends no attribution for a direct visit, or when it is turned off", async () => {
+    history.pushState({}, "", "/");
+    const client = createBrowserIforevents("pk_test", { baseUrl: api.baseUrl, batchSize: 1 });
+    await client.track("a");
+    history.pushState({}, "", "/?utm_source=x");
+    const off = createBrowserIforevents("pk_test", { baseUrl: api.baseUrl, batchSize: 1, attribution: false });
+    await off.track("b");
+    await sleep(60);
+    // Only these two clients' events: an earlier test's autoTrack still
+    // listens to history.
+    const sent = api
+      .byPath("/v1/events/track")
+      .filter((r) => ["a", "b"].includes(String(r.body.event_name)))
+      .map((r) => r.body.properties as Record<string, unknown>);
+    expect(sent).toHaveLength(2);
+    expect(sent.every((p) => !("utm_source" in p))).toBe(true);
+    await client.shutdown();
+    await off.shutdown();
+  });
+
   it("autoTrack fires a page view on load and on pushState/popstate", async () => {
     const client = createBrowserIforevents("pk_test", { baseUrl: api.baseUrl, batchSize: 1, autoTrack: true });
     await sleep(30);

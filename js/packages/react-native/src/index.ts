@@ -1,4 +1,4 @@
-import { IForeventsAPIIntegration, Iforevents, MemoryStorage, type EventContext, type IForeventsAPIConfig, type Integration, type IntegrationResult, type PageOptions, type Properties, type Storage } from "@iforevents/core";
+import { IForeventsAPIIntegration, Iforevents, MemoryStorage, attributionFromURL, nextAttribution, withAttribution, type AttributionState, type EventContext, type IForeventsAPIConfig, type Integration, type IntegrationResult, type PageOptions, type Properties, type Storage } from "@iforevents/core";
 import { AppState, Platform } from "react-native";
 
 export * from "@iforevents/core";
@@ -96,6 +96,18 @@ export interface ReactNativeIforevents {
   reset(): Promise<IntegrationResult[]>;
   flush(): Promise<IntegrationResult[]>;
   shutdown(): Promise<IntegrationResult[]>;
+  /**
+   * Records an opened deep link or universal link (`Linking.getInitialURL()`
+   * and the `url` event): sends `deep_link_opened` with the URL and starts
+   * the session attribution from its utm parameters and click ids, attached
+   * to every event until 30 minutes pass without one.
+   */
+  trackDeepLink(url: string, properties?: Properties): Promise<IntegrationResult[]>;
+  /**
+   * Sets the session attribution yourself, e.g. from the Play install
+   * referrer: `setAttribution(attributionFromQuery(referrer))`.
+   */
+  setAttribution(attribution: Properties): void;
 }
 
 /**
@@ -118,6 +130,11 @@ export function createReactNativeIforevents(projectKey: string, options: ReactNa
   })();
 
   let identifying: Promise<unknown> = Promise.resolve();
+  let attribution: AttributionState | null = null;
+  const attribute = (properties?: Properties, landing: Properties = {}): Properties => {
+    attribution = nextAttribution(attribution, landing, Date.now());
+    return withAttribution(properties, attribution);
+  };
   const client: ReactNativeIforevents = {
     iforevents,
     get api() {
@@ -127,12 +144,20 @@ export function createReactNativeIforevents(projectKey: string, options: ReactNa
     track: async (name, properties) => {
       await ready;
       await identifying;
-      return iforevents.track(name, properties);
+      return iforevents.track(name, attribute(properties));
     },
     screen: async (name, properties, pageOptions) => {
       await ready;
       await identifying;
-      return iforevents.screen(name, properties, pageOptions);
+      return iforevents.screen(name, attribute(properties), pageOptions);
+    },
+    trackDeepLink: async (url, properties) => {
+      await ready;
+      await identifying;
+      return iforevents.track("deep_link_opened", attribute({ url, ...properties }, attributionFromURL(url)));
+    },
+    setAttribution: (props) => {
+      attribution = nextAttribution(null, props, Date.now());
     },
     identify: async (customId, traits) => {
       await ready;

@@ -130,7 +130,42 @@ Nested property maps are still flattened with `_` (section 1), so the
 properties of an SDK event reach the api flat; a caller who needs nested
 structure at a destination sends it to the ingest API directly.
 
-### 3.2 Heatmaps (UI SDKs only: browser and Flutter)
+### 3.2 Attribution
+
+Client SDKs (browser, React Native, Flutter, Android, iOS) attach the
+session's attribution to the `properties` of every event of the session,
+so the api can split any report by origin (`$channel`, `$source`,
+`$medium`, `$utm_*`, `$referring_domain`, `$click_id`, `$param.<name>`;
+iforevents-api docs/ORIGIN_ANALYTICS.md):
+
+| Property | Value |
+|---|---|
+| `utm_source`, `utm_medium`, `utm_campaign`, `utm_term`, `utm_content`, `utm_id` | the landing URL's parameter, as sent |
+| `gclid`, `gbraid`, `wbraid`, `dclid`, `msclkid`, `fbclid`, `ttclid`, `twclid`, `li_fat_id`, `epik`, `sccid`, `rdt_cid`, `yclid` | the ad click id, as sent |
+| `referring_domain` | the referrer's host without `www.`, only when it is not the landing's own host |
+
+Rules:
+
+- A landing that carries any of these starts a new session attribution and
+  replaces the previous one. Values are cut at 512 characters.
+- Without a new landing, the attribution lasts while events keep coming
+  less than 30 minutes apart; after 30 minutes without an event it is
+  dropped and the next events carry none (a direct session).
+- The caller's own properties win over the attribution's keys.
+- `reset()` forgets it.
+- Browser: the landing is the page URL and `document.referrer` of the
+  first event of each page load; the attribution is kept in
+  `localStorage` (`iforevents.attribution`). In-app (history API)
+  navigations send the previous page as their `referrer`. `attribution:
+  false` turns it off.
+- Mobile: `trackDeepLink(url[, referrer])` sends `deep_link_opened` with
+  `url` (and `referrer`) and starts the attribution from the link;
+  `setAttribution(values)` sets it from an install referrer
+  (`attributionFromQuery` / `Attribution.fromInstallReferrer`). Android
+  records the Intent data of each opened Activity automatically
+  (`trackDeepLinks`, default on).
+
+### 3.3 Heatmaps (UI SDKs only: browser and Flutter)
 
 `POST /v1/events/heatmap` with `X-Project-Key` and `X-User-Id`, answered
 202. A batch belongs to one page view (`page_view_id`, 8 to 64 chars) and
